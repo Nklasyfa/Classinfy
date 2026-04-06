@@ -17,11 +17,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routing Endpoint (tanpa prefix /api, langsung path)
-app.use('/auth', authRoutes);
-app.use('/', roomRoutes);
-app.use('/', scheduleRoutes);
-app.use('/', bookingRoutes);
+// Routing Endpoint (dengan prefix /api)
+app.use('/api/auth', authRoutes);
+app.use('/api', roomRoutes);
+app.use('/api', scheduleRoutes);
+app.use('/api', bookingRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -29,10 +29,10 @@ app.get('/', (req, res) => {
     message: '🎓 CLASSIFY API - Sistem Manajemen Peminjaman Fasilitas Kampus',
     version: '1.0.0',
     endpoints: {
-      auth: ['POST /auth/register', 'POST /auth/login', 'GET /auth/profile'],
-      rooms: ['GET /rooms', 'GET /rooms/:id', 'POST /rooms'],
-      schedules: ['GET /schedules/:roomId', 'POST /schedules'],
-      bookings: ['POST /bookings', 'GET /bookings/me', 'GET /bookings', 'PATCH /bookings/:id/status'],
+      auth: ['POST /api/auth/register', 'POST /api/auth/login', 'GET /api/auth/profile'],
+      rooms: ['GET /api/rooms', 'GET /api/rooms/:id', 'POST /api/rooms'],
+      schedules: ['GET /api/schedules/:roomId', 'POST /api/schedules'],
+      bookings: ['POST /api/bookings', 'GET /api/bookings/me', 'GET /api/bookings', 'PATCH /api/bookings/:id/status'],
     },
   });
 });

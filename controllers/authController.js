@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Error saat register:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+    res.status(500).json({ message: 'Terjadi kesalahan pada server: ' + error.message });
   }
 };
 
