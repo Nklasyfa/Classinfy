@@ -104,12 +104,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter();
-const isLogin = ref(true)
+const route = useRoute();
+const isLogin = computed(() => route.name !== 'register')
 
 const username = ref('')
 const email = ref('')
@@ -121,9 +124,13 @@ const errorMsg = ref('')
 const successMsg = ref('')
 
 const toggleMode = () => {
-  isLogin.value = !isLogin.value;
   errorMsg.value = '';
   successMsg.value = '';
+  if (isLogin.value) {
+    router.push('/auth/register');
+  } else {
+    router.push('/auth/login');
+  }
 }
 
 const handleSubmit = async () => {
@@ -136,7 +143,7 @@ const handleSubmit = async () => {
   try {
     if (isLogin.value) {
       // Login API
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: email.value,
         password: password.value
       });
@@ -156,7 +163,7 @@ const handleSubmit = async () => {
         isLoading.value = false;
         return;
       }
-      const response = await axios.post('http://localhost:3000/api/auth/register', {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
         username: username.value,
         email: email.value,
         password: password.value
@@ -164,7 +171,7 @@ const handleSubmit = async () => {
 
       successMsg.value = 'Akun Anda berhasil didaftarkan! Mengalihkan ke login...';
       setTimeout(() => {
-        isLogin.value = true;
+        router.push('/auth/login');
       }, 1500);
     }
   } catch (error) {
