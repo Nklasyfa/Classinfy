@@ -6,8 +6,9 @@
     <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 rounded-full max-w-[900px] mt-6 mx-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(26,60,110,0.06)]">
       <div class="text-2xl font-extrabold tracking-tighter text-blue-900 dark:text-white font-headline">CLASSIFY</div>
       <div class="flex items-center gap-6">
-        <a class="hidden md:block text-slate-600 dark:text-slate-300 hover:text-blue-900 transition-transform duration-200 hover:scale-105 font-medium" href="#">Monitoring</a>
-        <button class="bg-blue-900 dark:bg-blue-600 text-white rounded-full px-6 py-2 font-bold hover:scale-105 transition-transform duration-200">Sign Up</button>
+        <router-link to="/" class="hidden md:block text-slate-600 dark:text-slate-300 hover:text-blue-900 transition-transform duration-200 hover:scale-105 font-medium">Monitoring</router-link>
+        <button v-if="isLogin" @click="router.push('/auth/register')" class="bg-blue-900 dark:bg-blue-600 text-white rounded-full px-6 py-2 font-bold hover:scale-105 transition-transform duration-200 cursor-pointer">Sign Up</button>
+        <button v-else @click="router.push('/auth/login')" class="bg-blue-900 dark:bg-blue-600 text-white rounded-full px-6 py-2 font-bold hover:scale-105 transition-transform duration-200 cursor-pointer">Login</button>
       </div>
     </nav>
 
@@ -152,8 +153,14 @@ const handleSubmit = async () => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data));
         successMsg.value = 'Login berhasil! Mengalihkan ke dashboard...';
+        
         setTimeout(() => {
-          router.push('/dashboard');
+          const userRole = response.data.data.role?.id;
+          if (userRole === 1) { // 1 = Admin
+            router.push('/admin/dashboard');
+          } else {
+            router.push('/dashboard');
+          }
         }, 1000);
       }
     } else {

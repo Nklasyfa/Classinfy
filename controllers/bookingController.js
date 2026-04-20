@@ -1,6 +1,142 @@
 const { Op } = require('sequelize');
 const { Booking, Room, User, Schedule } = require('../models');
 
+const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+async function detectConflict({ roomId, bookingDate, startTime, endTime, excludeBookingId = null }) {
+  const conflicts = [];
+
+  // 1. Cek konflik dengan Booking lain (status: pending / approved)
+  const bookingWhere = {
+    roomId,
+    bookingDate,
+    status: { [Op.in]: ['pending', 'approved'] },
+    [Op.and]: [
+      { startTime: { [Op.lt]: endTime } },   // existing.start < new.end
+      { endTime: { [Op.gt]: startTime } },     // existing.end > new.start
+    ],
+  };
+
+  // Exclude booking tertentu (berguna saat edit/update)
+  if (excludeBookingId) {
+    bookingWhere.id = { [Op.ne]: excludeBookingId };
+  }
+
+  const bookingConflicts = await Booking.findAll({
+    where: bookingWhere,
+    include: [
+      { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+    ],
+  });
+
+  for (const bc of bookingConflicts) {
+    conflicts.push({
+      type: 'booking',
+      source: 'Permohonan peminjaman lain',
+      detail: {
+        id: bc.id,
+        bookingDate: bc.bookingDate,
+        startTime: bc.startTime,
+        endTime: bc.endTime,
+        purpose: bc.purpose,
+        status: bc.status,
+        bookedBy: bc.user,
+      },
+    });
+  }
+
+  // 2. Cek konflik dengan Schedule tetap (jadwal akademik rutin)
+  const requestDate = new Date(bookingDate);
+  const dayOfWeek = requestDate.getDay(); // 0 = Minggu, 1 = Senin, ...
+
+  const scheduleConflicts = await Schedule.findAll({
+    where: {
+      roomId,
+      dayOfWeek,
+      [Op.and]: [
+        { startTime: { [Op.lt]: endTime } },
+        { endTime: { [Op.gt]: startTime } },
+      ],
+    },
+  });
+
+  for (const sc of scheduleConflicts) {
+    conflicts.push({
+      type: 'schedule',
+      source: 'Jadwal akademik tetap',
+      detail: {
+        id: sc.id,
+        day: DAY_NAMES[sc.dayOfWeek],
+        startTime: sc.startTime,
+        endTime: sc.endTime,
+        activity: sc.activity,
+        semester: sc.semester,
+      },
+    });
+  }
+
+  return {
+    status: conflicts.length === 0 ? 'aman' : 'conflict',
+    totalConflicts: conflicts.length,
+    conflicts,
+  };
+}
+
+// ==================== CHECK CONFLICT (Standalone - cek tanpa buat booking) ====================
+exports.checkConflict = async (req, res) => {
+  try {
+    const { roomId, bookingDate, startTime, endTime } = req.body;
+
+    // Validasi input
+    if (!roomId || !bookingDate || !startTime || !endTime) {
+      return res.status(400).json({
+        message: 'roomId, bookingDate, startTime, dan endTime harus diisi',
+      });
+    }
+
+    // Validasi waktu
+    if (startTime >= endTime) {
+      return res.status(400).json({ message: 'startTime harus lebih awal dari endTime' });
+    }
+
+    // Cek apakah ruangan ada
+    const room = await Room.findByPk(roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Ruangan tidak ditemukan' });
+    }
+
+    // Cek status ruangan
+    if (room.status === 'maintenance') {
+      return res.status(200).json({
+        status: 'conflict',
+        message: 'Ruangan sedang dalam maintenance',
+        room: { id: room.id, code: room.code, name: room.name, status: room.status },
+        totalConflicts: 1,
+        conflicts: [{
+          type: 'room_status',
+          source: 'Status ruangan',
+          detail: { status: 'maintenance', message: 'Ruangan tidak tersedia untuk peminjaman' },
+        }],
+      });
+    }
+
+    // Jalankan deteksi konflik
+    const result = await detectConflict({ roomId, bookingDate, startTime, endTime });
+
+    res.status(200).json({
+      ...result,
+      message: result.status === 'aman'
+        ? '✅ AMAN — Tidak ada konflik, ruangan tersedia pada waktu yang diminta.'
+        : `⚠️ CONFLICT — Ditemukan ${result.totalConflicts} konflik pada waktu yang diminta.`,
+      room: { id: room.id, code: room.code, name: room.name },
+      requestedSlot: { bookingDate, startTime, endTime },
+    });
+  } catch (error) {
+    console.error('Error checkConflict:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
 // ==================== CREATE BOOKING (dengan Deteksi Konflik) ====================
 exports.createBooking = async (req, res) => {
   try {
@@ -29,72 +165,14 @@ exports.createBooking = async (req, res) => {
     }
 
     // =====================================================================
-    // LOGIKA BISNIS KRUSIAL: Deteksi Konflik Waktu
+    // DETEKSI KONFLIK WAKTU (menggunakan helper reusable)
     // =====================================================================
+    const conflictResult = await detectConflict({ roomId, bookingDate, startTime, endTime });
 
-    // 1. Cek konflik dengan Booking lain (status: pending / approved)
-    const bookingConflict = await Booking.findOne({
-      where: {
-        roomId,
-        bookingDate,
-        status: { [Op.in]: ['pending', 'approved'] },
-        [Op.and]: [
-          { startTime: { [Op.lt]: endTime } },   // booking.start < new.end
-          { endTime: { [Op.gt]: startTime } },     // booking.end > new.start
-        ],
-      },
-      include: [
-        { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
-      ],
-    });
-
-    if (bookingConflict) {
+    if (conflictResult.status === 'conflict') {
       return res.status(409).json({
-        message: '⚠️ KONFLIK! Ruangan sudah dibooking pada waktu tersebut.',
-        conflict: {
-          type: 'booking',
-          existingBooking: {
-            id: bookingConflict.id,
-            bookingDate: bookingConflict.bookingDate,
-            startTime: bookingConflict.startTime,
-            endTime: bookingConflict.endTime,
-            purpose: bookingConflict.purpose,
-            status: bookingConflict.status,
-            bookedBy: bookingConflict.user,
-          },
-        },
-      });
-    }
-
-    // 2. Cek konflik dengan Schedule tetap (jadwal rutin)
-    const requestDate = new Date(bookingDate);
-    const dayOfWeek = requestDate.getDay(); // 0 = Minggu, 1 = Senin, ...
-
-    const scheduleConflict = await Schedule.findOne({
-      where: {
-        roomId,
-        dayOfWeek,
-        [Op.and]: [
-          { startTime: { [Op.lt]: endTime } },
-          { endTime: { [Op.gt]: startTime } },
-        ],
-      },
-    });
-
-    if (scheduleConflict) {
-      const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      return res.status(409).json({
-        message: '⚠️ KONFLIK! Bertabrakan dengan jadwal tetap ruangan.',
-        conflict: {
-          type: 'schedule',
-          existingSchedule: {
-            id: scheduleConflict.id,
-            day: dayNames[scheduleConflict.dayOfWeek],
-            startTime: scheduleConflict.startTime,
-            endTime: scheduleConflict.endTime,
-            activity: scheduleConflict.activity,
-          },
-        },
+        message: `⚠️ KONFLIK! Ditemukan ${conflictResult.totalConflicts} bentrokan jadwal.`,
+        ...conflictResult,
       });
     }
 

@@ -5,6 +5,7 @@ const verifyToken = require('../middlewares/verifyToken');
 const isAdmin = require('../middlewares/isAdmin');
 
 // Routes untuk Peminjaman
+router.post('/bookings/check-conflict', verifyToken, bookingController.checkConflict);
 router.post('/bookings', verifyToken, bookingController.createBooking);
 router.get('/bookings/me', verifyToken, bookingController.getMyBookings);
 router.get('/bookings', verifyToken, isAdmin, bookingController.getAllBookings);

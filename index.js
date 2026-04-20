@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const monitoringRoutes = require('./routes/monitoringRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api', bookingRoutes);
+app.use('/api', monitoringRoutes); // Public - tanpa auth
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -32,7 +34,8 @@ app.get('/', (req, res) => {
       auth: ['POST /api/auth/register', 'POST /api/auth/login', 'GET /api/auth/profile'],
       rooms: ['GET /api/rooms', 'GET /api/rooms/:id', 'POST /api/rooms'],
       schedules: ['GET /api/schedules/:roomId', 'POST /api/schedules'],
-      bookings: ['POST /api/bookings', 'GET /api/bookings/me', 'GET /api/bookings', 'PATCH /api/bookings/:id/status'],
+      bookings: ['POST /api/bookings/check-conflict', 'POST /api/bookings', 'GET /api/bookings/me', 'GET /api/bookings', 'PATCH /api/bookings/:id/status'],
+      monitoring: ['GET /api/monitoring?date=YYYY-MM-DD'],
     },
   });
 });
