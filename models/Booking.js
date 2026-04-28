@@ -32,13 +32,25 @@ const Booking = sequelize.define('Booking', {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected', 'cancelled'),
+    type: DataTypes.ENUM('pending', 'approved', 'rejected', 'cancelled', 'needs_negotiation'),
     allowNull: false,
     defaultValue: 'pending',
+  },
+  activityWeight: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    validate: { min: 1, max: 5 },
+    comment: 'Bobot prioritas: 1=rendah (umum), 2=organisasi, 3=UKM, 4=akademik, 5=rektorat',
   },
   rejectionReason: {
     type: DataTypes.TEXT,
     allowNull: true,
+  },
+  adminNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Catatan rekomendasi admin untuk negosiasi (ruang/waktu alternatif)',
   },
 }, {
   tableName: 'Bookings',

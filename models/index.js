@@ -4,6 +4,7 @@ const User = require('./User');
 const Room = require('./Room');
 const Schedule = require('./Schedule');
 const Booking = require('./Booking');
+const ScheduleLog = require('./ScheduleLog');
 
 // ==================== Associations ====================
 
@@ -23,6 +24,14 @@ Booking.belongsTo(Room, { foreignKey: 'roomId', as: 'room' });
 User.hasMany(Booking, { foreignKey: 'userId', as: 'bookings' });
 Booking.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// Stage 5: Schedule <-> ScheduleLog
+Schedule.hasMany(ScheduleLog, { foreignKey: 'scheduleId', as: 'logs' });
+ScheduleLog.belongsTo(Schedule, { foreignKey: 'scheduleId', as: 'schedule' });
+
+// Stage 5: User <-> ScheduleLog
+User.hasMany(ScheduleLog, { foreignKey: 'userId', as: 'scheduleLogs' });
+ScheduleLog.belongsTo(User, { foreignKey: 'userId', as: 'changedBy' });
+
 // ==================== Seed Functions ====================
 
 const seedRoles = async () => {
@@ -30,6 +39,7 @@ const seedRoles = async () => {
     { id: 1, name: 'Admin' },
     { id: 2, name: 'Mahasiswa' },
     { id: 3, name: 'Dosen' },
+    { id: 4, name: 'PJ' },
   ];
 
   for (const role of defaultRoles) {
@@ -38,7 +48,7 @@ const seedRoles = async () => {
       defaults: role,
     });
   }
-  console.log('✅ Default roles tersedia (Admin, Mahasiswa, Dosen)');
+  console.log('✅ Default roles tersedia (Admin, Mahasiswa, Dosen, PJ)');
 };
 
 module.exports = {
@@ -49,5 +59,6 @@ module.exports = {
   Room,
   Schedule,
   Booking,
+  ScheduleLog,
   seedRoles,
 };

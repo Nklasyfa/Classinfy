@@ -3,192 +3,270 @@
     <!-- Grid Overlay -->
     <div class="fixed inset-0 bg-grid pointer-events-none"></div>
 
-    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 rounded-full max-w-[900px] mt-6 mx-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(26,60,110,0.06)]">
-      <div class="text-2xl font-extrabold tracking-tighter text-blue-900 dark:text-white font-headline">CLASSIFY</div>
-      <div class="flex items-center gap-6">
-        <router-link to="/" class="hidden md:block text-slate-600 dark:text-slate-300 hover:text-blue-900 transition-transform duration-200 hover:scale-105 font-medium">Monitoring</router-link>
-        <button v-if="isLogin" @click="router.push('/auth/register')" class="bg-blue-900 dark:bg-blue-600 text-white rounded-full px-6 py-2 font-bold hover:scale-105 transition-transform duration-200 cursor-pointer">Sign Up</button>
-        <button v-else @click="router.push('/auth/login')" class="bg-blue-900 dark:bg-blue-600 text-white rounded-full px-6 py-2 font-bold hover:scale-105 transition-transform duration-200 cursor-pointer">Login</button>
+    <!-- TopNavBar -->
+    <nav class="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-[900px] z-50 bg-white/80 backdrop-blur-xl rounded-full px-6 py-3 flex items-center justify-between shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-outline-variant/10">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl font-extrabold tracking-tighter text-primary">CLASSINFY</span>
+      </div>
+      <div class="flex items-center gap-4 md:gap-8">
+        <router-link to="/" class="hidden md:block text-slate-600 hover:text-primary transition-transform duration-200 hover:scale-105 font-medium">Monitoring</router-link>
+        <button
+          v-if="isLogin"
+          @click="router.push('/auth/register')"
+          class="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+        >Sign Up</button>
+        <button
+          v-else
+          @click="router.push('/auth/login')"
+          class="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+        >Login</button>
       </div>
     </nav>
 
-    <main class="min-h-screen flex items-center justify-center p-4 pt-28 pb-32 relative">
-      <div class="w-full max-w-[480px] bg-surface-container-lowest p-10 rounded-lg shadow-[0_20px_50px_rgba(26,60,110,0.1)] relative z-10">
-        <div class="mb-10 text-center">
-          <h1 class="text-4xl font-extrabold tracking-tight text-primary font-headline mb-2">{{ isLogin ? 'Selamat Datang' : 'Buat Akun Baru' }}</h1>
-          <p class="text-on-surface-variant font-label text-sm uppercase tracking-widest">{{ isLogin ? 'Silakan masuk ke akun Anda' : 'Daftar untuk menggunakan layanan' }}</p>
+    <!-- Main Content -->
+    <main class="min-h-screen flex items-center justify-center px-4 pt-24 pb-32">
+      <div class="w-full max-w-[480px] bg-surface-container-lowest rounded-[24px] p-8 md:p-10 shadow-[0_20px_50px_rgba(26,60,110,0.12)] relative z-20">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-container rounded-2xl mb-6 shadow-lg">
+            <span class="material-symbols-outlined text-white text-4xl">{{ isLogin ? 'domain' : 'person_add' }}</span>
+          </div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-primary mb-2">{{ isLogin ? 'Masuk ke CLASSINFY' : 'Daftar Akun Baru' }}</h1>
+          <p class="text-on-surface-variant font-medium">{{ isLogin ? 'Kelola ruang kampus lebih mudah & transparan' : 'Buat akun untuk menggunakan layanan CLASSINFY' }}</p>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <div v-if="!isLogin" class="space-y-2">
-            <label class="font-label text-xs font-semibold text-primary/70 ml-1 uppercase">Username / Nama Lengkap</label>
+        <!-- Role Pills (Register only) -->
+        <div v-if="!isLogin" class="flex flex-wrap justify-center gap-2 mb-8">
+          <button
+            v-for="role in roleOptions" :key="role.id"
+            @click="selectedRoleId = role.id"
+            :class="[
+              'px-4 py-1.5 rounded-full text-xs font-bold border transition-colors flex items-center gap-1.5 cursor-pointer',
+              selectedRoleId === role.id
+                ? 'bg-primary text-white border-primary shadow-md'
+                : 'bg-surface-container-high text-primary border-primary/5 hover:bg-surface-container-highest'
+            ]"
+          >
+            <span class="material-symbols-outlined text-[16px]">{{ role.icon }}</span>
+            {{ role.label }}
+          </button>
+        </div>
+
+        <!-- Form -->
+        <form @submit.prevent="handleSubmit" class="space-y-5">
+          <!-- Username (Register only) -->
+          <div v-if="!isLogin">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1 font-label">Username / Nama Lengkap</label>
             <div class="relative">
-              <input v-model="username" :disabled="isLoading" required :class="['w-full px-4 py-4 bg-surface-container-low rounded-lg border-2 font-medium text-on-surface placeholder:text-outline/50 transition-all', isLoading ? 'cursor-not-allowed opacity-70 border-transparent' : 'border-transparent focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20']" placeholder="Nama Anda" type="text" />
-              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline/50">person</span>
+              <input
+                v-model="username"
+                :disabled="isLoading"
+                required
+                class="w-full px-5 py-3.5 bg-surface-container-low border-none rounded-[12px] text-on-surface placeholder:text-slate-400 focus:ring-2 focus:ring-secondary/20 transition-all outline-none"
+                placeholder="Nama Lengkap Anda"
+                type="text"
+              />
+              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">person</span>
             </div>
           </div>
 
-          <div class="space-y-2">
-            <label class="font-label text-xs font-semibold text-primary/70 ml-1 uppercase">Email Address</label>
+          <!-- Email -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1 font-label">Email</label>
             <div class="relative">
-              <input v-model="email" :disabled="isLoading" required :class="['w-full px-4 py-4 bg-surface-container-low rounded-lg border-2 transition-all font-medium text-on-surface placeholder:text-outline/50', isLoading ? 'cursor-not-allowed opacity-70 border-transparent' : (errorMsg ? 'border-[#DC2626] focus:outline-none focus:ring-2 focus:ring-error/20' : 'border-transparent focus:outline-none focus:ring-2 focus:border-secondary focus:ring-secondary/20')]" placeholder="nama@email.com" type="email"/>
-              <span :class="['material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2', errorMsg ? 'text-[#DC2626]' : 'text-outline/50']">mail</span>
+              <input
+                v-model="email"
+                :disabled="isLoading"
+                required
+                :class="['w-full px-5 py-3.5 bg-surface-container-low border-none rounded-[12px] text-on-surface placeholder:text-slate-400 transition-all outline-none', errorMsg ? 'ring-2 ring-error/30' : 'focus:ring-2 focus:ring-secondary/20']"
+                placeholder="email@unesa.ac.id"
+                type="email"
+              />
+              <span :class="['material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[20px]', errorMsg ? 'text-error' : 'text-slate-400']">mail</span>
             </div>
           </div>
 
-          <div class="space-y-2">
-            <label class="font-label text-xs font-semibold text-primary/70 ml-1 uppercase">Password</label>
+          <!-- Password -->
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1 font-label">Password</label>
             <div class="relative">
-              <input v-model="password" :disabled="isLoading" required :class="['w-full px-4 py-4 bg-surface-container-low rounded-lg border-2 transition-all font-medium text-on-surface placeholder:text-outline/50', isLoading ? 'cursor-not-allowed opacity-70 border-transparent' : (errorMsg ? 'border-[#DC2626] focus:outline-none focus:ring-2 focus:ring-error/20' : 'border-transparent focus:outline-none focus:ring-2 focus:border-secondary focus:ring-secondary/20')]" placeholder="••••••••" :type="showPassword ? 'text' : 'password'" />
-              <button type="button" :disabled="isLoading" @click="showPassword = !showPassword" :class="['absolute right-4 top-1/2 -translate-y-1/2 hover:text-primary transition-colors', isLoading ? 'cursor-not-allowed opacity-50' : '', errorMsg ? 'text-[#DC2626]' : 'text-outline/50']">
-                <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+              <input
+                v-model="password"
+                :disabled="isLoading"
+                required
+                :class="['w-full px-5 py-3.5 bg-surface-container-low border-none rounded-[12px] text-on-surface placeholder:text-slate-400 transition-all outline-none', errorMsg ? 'ring-2 ring-error/30' : 'focus:ring-2 focus:ring-secondary/20']"
+                placeholder="••••••••"
+                :type="showPassword ? 'text' : 'password'"
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-[20px]">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
               </button>
             </div>
           </div>
 
-          <div v-if="isLogin" class="flex items-center justify-between text-sm">
-            <label class="flex items-center gap-2 cursor-pointer group">
-              <input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox" :disabled="isLoading" />
-              <span :class="['font-medium transition-colors', isLoading ? 'text-on-surface-variant opacity-70' : 'text-on-surface-variant group-hover:text-primary']">Ingat Saya</span>
-            </label>
-            <a :class="['font-bold transition-all', isLoading ? 'text-secondary pointer-events-none opacity-50' : 'text-secondary hover:underline']" href="#">Lupa Password?</a>
+          <!-- Forgot password (Login only) -->
+          <div v-if="isLogin" class="flex justify-end">
+            <a class="text-sm font-bold text-secondary hover:text-primary transition-colors cursor-pointer">Lupa password?</a>
           </div>
 
-          <button 
-            :disabled="isLoading" 
+          <!-- Submit -->
+          <button
+            :disabled="isLoading"
             :class="[
-              'w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all',
-              isLoading 
-                ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-wait shadow-none' 
-                : 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]'
-            ]" 
+              'w-full py-4 rounded-[12px] font-bold text-base tracking-wide transition-all uppercase flex items-center justify-center gap-3',
+              isLoading
+                ? 'bg-slate-300 text-slate-500 cursor-wait shadow-none'
+                : 'bg-primary text-white shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] cursor-pointer'
+            ]"
             type="submit"
           >
             <template v-if="isLoading">
-              <span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span>
-              MEMROSES...
+              <span class="material-symbols-outlined animate-spin text-[20px]">sync</span>
+              MEMPROSES...
             </template>
             <template v-else>
               {{ isLogin ? 'MASUK' : 'DAFTAR' }}
-              <span class="material-symbols-outlined">{{ isLogin ? 'login' : 'person_add' }}</span>
             </template>
           </button>
-          
-          <div v-if="errorMsg" class="mt-4 flex items-center justify-center gap-2 text-[#DC2626] font-semibold text-sm animate-pulse">
-            <span>❌ {{ errorMsg }}</span>
-          </div>
-          <div v-if="successMsg" class="mt-4 flex items-center justify-center gap-2 text-green-600 font-semibold text-sm animate-pulse">
-            <span>✅ {{ successMsg }}</span>
-          </div>
         </form>
 
-        <div class="mt-10 pt-8 border-t border-outline-variant/10 text-center">
-          <p class="text-on-surface-variant font-medium">
-            {{ isLogin ? 'Belum punya akun?' : 'Sudah punya akun?' }} 
-            <button @click="toggleMode" type="button" class="text-secondary font-bold hover:underline ml-1">
-              {{ isLogin ? 'Daftar Sekarang' : 'Masuk di Sini' }}
-            </button>
+        <!-- Error / Success -->
+        <div v-if="errorMsg" class="mt-5 flex items-center justify-center gap-2 text-error font-semibold text-sm bg-error-container/50 rounded-xl py-3 px-4">
+          <span class="material-symbols-outlined text-[18px]">error</span>
+          {{ errorMsg }}
+        </div>
+        <div v-if="successMsg" class="mt-5 flex items-center justify-center gap-2 text-green-700 font-semibold text-sm bg-green-50 rounded-xl py-3 px-4">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>
+          {{ successMsg }}
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-4 my-8">
+          <div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-widest">atau</span>
+          <div class="h-[1px] flex-1 bg-outline-variant/30"></div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="text-center space-y-6">
+          <p v-if="isLogin" class="text-sm text-on-surface-variant">
+            Belum punya akun?
+            <button @click="router.push('/auth/register')" type="button" class="font-bold text-primary hover:underline ml-1 cursor-pointer">Daftar Sekarang</button>
           </p>
+          <p v-else class="text-sm text-on-surface-variant">
+            Sudah punya akun?
+            <button @click="router.push('/auth/login')" type="button" class="font-bold text-primary hover:underline ml-1 cursor-pointer">Masuk di Sini</button>
+          </p>
+          <router-link to="/" class="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:translate-x-[-4px] transition-transform">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Kembali ke Monitoring
+          </router-link>
         </div>
       </div>
     </main>
 
-    <footer class="absolute bottom-8 w-full flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 px-4 font-['Inter'] text-xs font-medium uppercase tracking-widest bg-transparent z-20 text-center">
-      <span class="text-slate-400 dark:text-slate-500">© 2026 CLASSIFY Campus Management. All rights reserved.</span>
-      <div class="flex flex-wrap justify-center gap-4 md:gap-6">
-        <a class="text-slate-400 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
-        <a class="text-slate-400 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
-        <a class="text-slate-400 dark:text-slate-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors opacity-80 hover:opacity-100" href="#">Help Center</a>
+    <!-- Footer -->
+    <footer class="absolute bottom-0 w-full py-8 flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 px-4 z-20 text-center">
+      <p class="font-label text-xs font-medium uppercase tracking-widest text-slate-400">© 2026 CLASSINFY Campus Management. All rights reserved.</p>
+      <div class="hidden sm:flex gap-6">
+        <a class="font-label text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-secondary transition-colors cursor-pointer">Privacy Policy</a>
+        <a class="font-label text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-secondary transition-colors cursor-pointer">Terms of Service</a>
+        <a class="font-label text-xs font-medium uppercase tracking-widest text-slate-400 hover:text-secondary transition-colors cursor-pointer">Help Center</a>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-import { useRouter, useRoute } from 'vue-router'
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
-const router = useRouter();
-const route = useRoute();
 const isLogin = computed(() => route.name !== 'register')
 
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const selectedRoleId = ref(2)
 
 const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 
-const toggleMode = () => {
-  errorMsg.value = '';
-  successMsg.value = '';
-  if (isLogin.value) {
-    router.push('/auth/register');
-  } else {
-    router.push('/auth/login');
-  }
-}
+const roleOptions = [
+  { id: 2, label: 'Mahasiswa', icon: 'person' },
+  { id: 4, label: 'PJ', icon: 'school' },
+  { id: 3, label: 'Tendik', icon: 'corporate_fare' },
+  { id: 1, label: 'Admin', icon: 'settings' },
+]
 
 const handleSubmit = async () => {
-  if (!email.value || !password.value) return;
+  if (!email.value || !password.value) return
 
-  isLoading.value = true;
-  errorMsg.value = '';
-  successMsg.value = '';
+  isLoading.value = true
+  errorMsg.value = ''
+  successMsg.value = ''
 
   try {
     if (isLogin.value) {
-      // Login API
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email: email.value,
-        password: password.value
-      });
+      await authStore.login(email.value, password.value)
+      successMsg.value = 'Login berhasil! Mengalihkan...'
 
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data));
-        successMsg.value = 'Login berhasil! Mengalihkan ke dashboard...';
-        
-        setTimeout(() => {
-          const userRole = response.data.data.role?.id;
-          if (userRole === 1) { // 1 = Admin
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/dashboard');
-          }
-        }, 1000);
-      }
+      setTimeout(() => {
+        if (authStore.isAdmin) {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+      }, 800)
     } else {
-      // Register API
       if (!username.value) {
         errorMsg.value = 'Username / Nama Lengkap wajib diisi'
-        isLoading.value = false;
-        return;
+        isLoading.value = false
+        return
       }
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
+
+      await axios.post(`${API_URL}/api/auth/register`, {
         username: username.value,
         email: email.value,
-        password: password.value
-      });
+        password: password.value,
+        roleId: selectedRoleId.value,
+      })
 
-      successMsg.value = 'Akun Anda berhasil didaftarkan! Mengalihkan ke login...';
+      successMsg.value = 'Registrasi berhasil! Mengalihkan ke login...'
       setTimeout(() => {
-        router.push('/auth/login');
-      }, 1500);
+        router.push('/auth/login')
+      }, 1200)
     }
   } catch (error) {
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMsg.value = error.response.data.message;
+    if (error.response?.data?.message) {
+      errorMsg.value = error.response.data.message
     } else {
-      errorMsg.value = 'Terjadi kesalahan saat menghubungi server.';
+      errorMsg.value = 'Terjadi kesalahan saat menghubungi server.'
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 </script>
+
+<style scoped>
+.bg-grid {
+  background-image: 
+    linear-gradient(to right, rgba(200, 213, 232, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 213, 232, 0.4) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+</style>

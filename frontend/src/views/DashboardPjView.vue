@@ -5,15 +5,16 @@
 
     <!-- Navigation -->
     <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-6 pointer-events-none">
-      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-[0_8px_32px_rgba(26,60,110,0.06)] h-[60px] max-w-[900px] w-full flex items-center justify-between px-6 pointer-events-auto">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+      <div class="bg-white/80 backdrop-blur-md rounded-full shadow-[0_8px_32px_rgba(26,60,110,0.06)] h-[60px] max-w-[900px] w-full flex items-center justify-between px-6 pointer-events-auto">
+        <router-link to="/" class="flex items-center gap-2 cursor-pointer group">
+          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center group-hover:bg-secondary transition-colors">
             <span class="text-white text-xs font-extrabold tracking-tighter">C</span>
           </div>
-          <span class="font-extrabold text-primary tracking-tighter text-xl">CLASSIFY</span>
-        </div>
+          <span class="font-extrabold text-primary tracking-tighter text-xl group-hover:text-secondary transition-colors">CLASSINFY</span>
+        </router-link>
         
-        <div class="hidden md:flex items-center gap-2">
+        <div class="hidden md:flex items-center gap-2 pointer-events-auto">
+          <router-link to="/" class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300">Monitoring</router-link>
           <a class="bg-[#1A3C6E] text-white rounded-full px-6 py-2 font-medium text-sm tracking-tight transition-all duration-300 scale-105" href="#">Dashboard</a>
           <a class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300" href="#">Jadwal Saya</a>
           <a class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300" href="#">Riwayat</a>
@@ -167,7 +168,8 @@
                 </td>
               </tr>
               
-              <tr class="hover:bg-surface-container-low/30 transition-colors border-l-4 border-l-orange-500">
+              <!-- Row 3 with OPEN DROPDOWN -->
+              <tr class="bg-primary/5 relative">
                 <td class="px-8 py-5 font-bold text-primary">13.40-15.20</td>
                 <td class="px-6 py-5 font-semibold text-on-surface-variant">MG2-101</td>
                 <td class="px-6 py-5 font-bold text-primary">Jaringan Komp.</td>
@@ -177,13 +179,44 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Ditunda
                   </span>
                 </td>
-                <td class="px-6 py-5 text-right pr-8 relative">
-                  <button class="bg-primary text-white border border-primary px-4 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-2 ml-auto hover:bg-primary-container transition-colors shadow-sm">
+                <td class="px-6 py-5 text-right relative">
+                  <button class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ml-auto">
+                    Ubah Status <span class="material-symbols-outlined text-xs">keyboard_arrow_up</span>
+                  </button>
+                  <!-- Dropdown Overlay -->
+                  <div class="absolute right-6 top-full mt-2 w-48 bg-white editorial-shadow rounded-xl p-2 z-40 border border-primary/5">
+                    <button class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors">
+                      <span class="w-2 h-2 rounded-full bg-green-500"></span> ✅ Dipakai
+                    </button>
+                    <button class="w-full text-left px-4 py-2 hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span> 🔵 Online
+                    </button>
+                    <button class="w-full text-left px-4 py-2 hover:bg-orange-50 text-orange-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors">
+                      <span class="w-2 h-2 rounded-full bg-orange-500"></span> 🟡 Ditunda
+                    </button>
+                    <button class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors">
+                      <span class="w-2 h-2 rounded-full bg-red-500"></span> 🔴 Dibatalkan
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- Row 4 -->
+              <tr class="hover:bg-surface-container-low/30 transition-colors">
+                <td class="px-8 py-5 font-bold text-primary">15.20-17.00</td>
+                <td class="px-6 py-5 font-semibold text-on-surface-variant">MG2-202</td>
+                <td class="px-6 py-5 font-bold text-primary">Basis Data</td>
+                <td class="px-6 py-5 font-bold text-on-surface-variant">D</td>
+                <td class="px-6 py-5">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 font-bold text-[11px]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Terjadwal
+                  </span>
+                </td>
+                <td class="px-6 py-5 text-right">
+                  <button class="bg-surface-container-high hover:bg-surface-container-highest px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ml-auto">
                     Ubah Status <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
                   </button>
                 </td>
               </tr>
-              
             </tbody>
           </table>
         </div>
@@ -231,8 +264,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="w-full py-8 mt-auto px-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 border-t border-primary/5">
-      <p class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40">© 2026 CLASSIFY UNESA. Digital Quad System.</p>
+    <footer class="w-full py-8 mt-auto px-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40">© 2026 CLASSINFY UNESA. Digital Quad System.</p>
       <div class="flex items-center gap-8">
         <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100" href="#">Panduan PJ</a>
         <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100" href="#">Bantuan</a>
@@ -245,10 +278,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
-const userContext = localStorage.getItem('user');
-const user = ref(userContext ? JSON.parse(userContext) : null);
+const authStore = useAuthStore()
+
+const user = computed(() => authStore.user)
 
 const initials = computed(() => {
   if (!user.value || !user.value.username) return 'BS';
@@ -261,22 +296,15 @@ const currentDate = computed(() => {
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
-  }).format(new Date());
+  }).format(new Date())
 })
 
 const handleLogout = () => {
   if (confirm('Apakah Anda yakin ingin keluar?')) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/auth/login');
+    authStore.logout()
+    router.push('/auth/login')
   }
 }
-
-onMounted(() => {
-  if (!user.value) {
-    // router.push('/auth/login'); // Enforce auth natively
-  }
-});
 </script>
 
 <style scoped>
