@@ -89,8 +89,16 @@ exports.getMonitoringData = async (req, res) => {
         }
 
         if (matchedSchedule) {
+          // Map schedule dynamic status ke monitoring status
+          const scheduleStatusMap = {
+            aktif: 'terjadwal',   // Jadwal aktif = tampil sebagai terjadwal
+            online: 'online',     // Kelas dipindah online
+            ditunda: 'ditunda',   // Kelas ditunda
+            batal: 'dibatalkan',  // Kelas dibatalkan
+          };
+
           return {
-            status: 'terjadwal',
+            status: scheduleStatusMap[matchedSchedule.status] || 'terjadwal',
             title: matchedSchedule.activity,
             person: matchedSchedule.semester || '-',
             scheduleId: matchedSchedule.id,

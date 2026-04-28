@@ -32,6 +32,11 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  status: {
+    type: DataTypes.ENUM('aktif', 'online', 'ditunda', 'batal'),
+    allowNull: false,
+    defaultValue: 'aktif',
+  },
 }, {
   tableName: 'Schedules',
   timestamps: true,

@@ -3,14 +3,15 @@ const { Booking, Room, User, Schedule } = require('../models');
 
 const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
+// ==================== CONFLICT DETECTION ENGINE ====================
 async function detectConflict({ roomId, bookingDate, startTime, endTime, excludeBookingId = null }) {
   const conflicts = [];
 
-  // 1. Cek konflik dengan Booking lain (status: pending / approved)
+  // 1. Cek konflik dengan Booking lain (status: pending / approved / needs_negotiation)
   const bookingWhere = {
     roomId,
     bookingDate,
-    status: { [Op.in]: ['pending', 'approved'] },
+    status: { [Op.in]: ['pending', 'approved', 'needs_negotiation'] },
     [Op.and]: [
       { startTime: { [Op.lt]: endTime } },   // existing.start < new.end
       { endTime: { [Op.gt]: startTime } },     // existing.end > new.start
@@ -40,12 +41,13 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
         endTime: bc.endTime,
         purpose: bc.purpose,
         status: bc.status,
+        activityWeight: bc.activityWeight,
         bookedBy: bc.user,
       },
     });
   }
 
-  // 2. Cek konflik dengan Schedule tetap (jadwal akademik rutin)
+  // 2. Cek konflik dengan Schedule tetap (jadwal akademik rutin) — hanya yang aktif
   const requestDate = new Date(bookingDate);
   const dayOfWeek = requestDate.getDay(); // 0 = Minggu, 1 = Senin, ...
 
@@ -53,6 +55,7 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
     where: {
       roomId,
       dayOfWeek,
+      status: 'aktif', // Hanya jadwal yang aktif yang menjadi konflik
       [Op.and]: [
         { startTime: { [Op.lt]: endTime } },
         { endTime: { [Op.gt]: startTime } },
@@ -71,6 +74,7 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
         endTime: sc.endTime,
         activity: sc.activity,
         semester: sc.semester,
+        status: sc.status,
       },
     });
   }
@@ -82,7 +86,48 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
   };
 }
 
-// ==================== CHECK CONFLICT (Standalone - cek tanpa buat booking) ====================
+// ==================== PREEMPTION ENGINE ====================
+// Auto-cancel booking yang weight-nya lebih rendah saat ada approval weight lebih tinggi
+async function executePreemption({ roomId, bookingDate, startTime, endTime, approvedWeight, excludeBookingId }) {
+  const preempted = [];
+
+  // Cari booking bertabrakan yang weight-nya lebih rendah
+  const lowerPriorityBookings = await Booking.findAll({
+    where: {
+      roomId,
+      bookingDate,
+      status: { [Op.in]: ['pending', 'approved'] },
+      activityWeight: { [Op.lt]: approvedWeight },
+      id: { [Op.ne]: excludeBookingId },
+      [Op.and]: [
+        { startTime: { [Op.lt]: endTime } },
+        { endTime: { [Op.gt]: startTime } },
+      ],
+    },
+    include: [
+      { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+    ],
+  });
+
+  for (const booking of lowerPriorityBookings) {
+    const oldStatus = booking.status;
+    booking.status = 'cancelled';
+    booking.rejectionReason = `Ditimpa oleh kegiatan prioritas lebih tinggi (weight: ${approvedWeight} > ${booking.activityWeight})`;
+    await booking.save();
+
+    preempted.push({
+      id: booking.id,
+      purpose: booking.purpose,
+      oldStatus,
+      activityWeight: booking.activityWeight,
+      bookedBy: booking.user,
+    });
+  }
+
+  return preempted;
+}
+
+// ==================== CHECK CONFLICT (Standalone) ====================
 exports.checkConflict = async (req, res) => {
   try {
     const { roomId, bookingDate, startTime, endTime } = req.body;
@@ -140,7 +185,7 @@ exports.checkConflict = async (req, res) => {
 // ==================== CREATE BOOKING (dengan Deteksi Konflik) ====================
 exports.createBooking = async (req, res) => {
   try {
-    const { roomId, bookingDate, startTime, endTime, purpose } = req.body;
+    const { roomId, bookingDate, startTime, endTime, purpose, activityWeight } = req.body;
     const userId = req.user.id;
 
     // Validasi input
@@ -153,6 +198,12 @@ exports.createBooking = async (req, res) => {
     // Validasi waktu
     if (startTime >= endTime) {
       return res.status(400).json({ message: 'startTime harus lebih awal dari endTime' });
+    }
+
+    // Validasi activityWeight
+    const weight = activityWeight ? parseInt(activityWeight) : 1;
+    if (weight < 1 || weight > 5) {
+      return res.status(400).json({ message: 'activityWeight harus antara 1-5' });
     }
 
     // Cek apakah ruangan ada dan available
@@ -186,6 +237,7 @@ exports.createBooking = async (req, res) => {
       startTime,
       endTime,
       purpose,
+      activityWeight: weight,
       status: 'pending',
     });
 
@@ -253,26 +305,81 @@ exports.getAllBookings = async (req, res) => {
   }
 };
 
-// ==================== UPDATE BOOKING STATUS (Admin: Approve/Reject) ====================
+// ==================== GET BOOKING BY ID (Admin Only) ====================
+exports.getBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findByPk(id, {
+      include: [
+        { model: Room, as: 'room', attributes: ['id', 'code', 'name', 'location'] },
+        { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+      ],
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking tidak ditemukan' });
+    }
+
+    res.status(200).json({
+      message: 'Detail peminjaman',
+      data: booking,
+    });
+  } catch (error) {
+    console.error('Error getBookingById:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// ==================== UPDATE BOOKING STATUS (Admin: Approve/Reject/Cancel) ====================
 exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, rejectionReason } = req.body;
 
-    if (!status || !['approved', 'rejected', 'cancelled'].includes(status)) {
+    const validStatuses = ['approved', 'rejected', 'cancelled', 'needs_negotiation'];
+    if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({
-        message: 'Status harus salah satu dari: approved, rejected, cancelled',
+        message: 'Status harus salah satu dari: approved, rejected, cancelled, needs_negotiation',
       });
     }
 
-    const booking = await Booking.findByPk(id);
+    const booking = await Booking.findByPk(id, {
+      include: [
+        { model: Room, as: 'room', attributes: ['id', 'code', 'name'] },
+        { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+      ],
+    });
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking tidak ditemukan' });
     }
 
-    if (booking.status !== 'pending') {
+    // Validasi transisi status yang valid
+    const allowedTransitions = {
+      pending: ['approved', 'rejected', 'needs_negotiation'],
+      needs_negotiation: ['approved', 'rejected', 'cancelled'],
+      approved: ['cancelled'],
+    };
+
+    const allowed = allowedTransitions[booking.status];
+    if (!allowed || !allowed.includes(status)) {
       return res.status(400).json({
-        message: `Booking sudah berstatus "${booking.status}", tidak bisa diubah lagi`,
+        message: `Tidak bisa mengubah status dari "${booking.status}" ke "${status}"`,
+      });
+    }
+
+    // =====================================================================
+    // PREEMPTION: Saat approve, auto-cancel booking berprioritas lebih rendah
+    // =====================================================================
+    let preemptedBookings = [];
+    if (status === 'approved') {
+      preemptedBookings = await executePreemption({
+        roomId: booking.roomId,
+        bookingDate: booking.bookingDate,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        approvedWeight: booking.activityWeight,
+        excludeBookingId: booking.id,
       });
     }
 
@@ -282,7 +389,69 @@ exports.updateBookingStatus = async (req, res) => {
     }
     await booking.save();
 
-    const updated = await Booking.findByPk(id, {
+    // Reload with fresh data
+    await booking.reload({
+      include: [
+        { model: Room, as: 'room', attributes: ['id', 'code', 'name'] },
+        { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+      ],
+    });
+
+    const response = {
+      message: `Booking berhasil di-${status}`,
+      data: booking,
+    };
+
+    // Sertakan info preemption jika ada
+    if (preemptedBookings.length > 0) {
+      response.preempted = {
+        message: `${preemptedBookings.length} booking berprioritas lebih rendah otomatis dibatalkan`,
+        bookings: preemptedBookings,
+      };
+    }
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error updateBookingStatus:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// ==================== NEGOTIATE BOOKING (Admin: Kirim Rekomendasi) ====================
+exports.negotiateBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { adminNotes } = req.body;
+
+    if (!adminNotes || adminNotes.trim().length === 0) {
+      return res.status(400).json({
+        message: 'adminNotes (rekomendasi) harus diisi',
+      });
+    }
+
+    const booking = await Booking.findByPk(id, {
+      include: [
+        { model: Room, as: 'room', attributes: ['id', 'code', 'name'] },
+        { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
+      ],
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking tidak ditemukan' });
+    }
+
+    // Hanya booking pending yang bisa dinegosiasi
+    if (booking.status !== 'pending') {
+      return res.status(400).json({
+        message: `Booking berstatus "${booking.status}", hanya booking "pending" yang bisa dinegosiasi`,
+      });
+    }
+
+    booking.status = 'needs_negotiation';
+    booking.adminNotes = adminNotes;
+    await booking.save();
+
+    await booking.reload({
       include: [
         { model: Room, as: 'room', attributes: ['id', 'code', 'name'] },
         { model: User, as: 'user', attributes: ['id', 'username', 'email'] },
@@ -290,11 +459,11 @@ exports.updateBookingStatus = async (req, res) => {
     });
 
     res.status(200).json({
-      message: `Booking berhasil di-${status}`,
-      data: updated,
+      message: 'Booking berhasil dipindah ke status negosiasi, rekomendasi admin telah disimpan',
+      data: booking,
     });
   } catch (error) {
-    console.error('Error updateBookingStatus:', error);
+    console.error('Error negotiateBooking:', error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
   }
 };
