@@ -43,7 +43,7 @@ const roomToDelete = ref(null)
 const formData = ref({
   id: '',
   code: '',
-  building: 'Gedung Pascasarjana',
+  building: 'Gedung 1',
   floor: '01',
   capacity: 30,
   facilities: [],
@@ -58,7 +58,7 @@ const facilityOptions = [
 ]
 
 const resetForm = () => {
-  formData.value = { id: '', code: '', building: 'Gedung Pascasarjana', floor: '01', capacity: 30, facilities: [], status: 'Aktif' }
+  formData.value = { id: '', code: '', building: 'Gedung 1', floor: '01', capacity: 30, facilities: [], status: 'Aktif' }
 }
 
 const openAddModal = () => {
@@ -187,9 +187,9 @@ const handleLogout = () => {
         </div>
         <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
           <option>Semua Gedung</option>
-          <option>Gedung Pascasarjana</option>
-          <option>Gedung Rektorat</option>
-          <option>Laboratorium Terpadu</option>
+          <option>Gedung 1</option>
+          <option>Gedung 2</option>
+          <option>Labkom</option>
         </select>
         <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
           <option>Semua Status</option>
@@ -285,9 +285,9 @@ const handleLogout = () => {
               <label class="font-label text-xs font-semibold uppercase tracking-wider text-outline">Kode Gedung (Building)</label>
               <select v-model="formData.building" class="w-full bg-surface-container-low border-none rounded-md px-4 py-3 focus:ring-2 focus:ring-primary-fixed-dim transition-all appearance-none cursor-pointer">
                 <option disabled selected>Pilih Gedung</option>
-                <option>Gedung Pascasarjana</option>
-                <option>Gedung Rektorat</option>
-                <option>Laboratorium Terpadu</option>
+                <option>Gedung 1</option>
+                <option>Gedung 2</option>
+                <option>Labkom</option>
               </select>
             </div>
           </div>
@@ -392,9 +392,9 @@ const handleLogout = () => {
               <label class="font-label text-xs font-semibold uppercase tracking-wider text-outline">Kode Gedung (Building)</label>
               <select v-model="formData.building" class="w-full bg-surface-container-low border-none rounded-md px-4 py-3 focus:ring-2 focus:ring-primary-fixed-dim transition-all appearance-none cursor-pointer">
                 <option disabled selected>Pilih Gedung</option>
-                <option>Gedung Pascasarjana</option>
-                <option>Gedung Rektorat</option>
-                <option>Laboratorium Terpadu</option>
+                <option>Gedung 1</option>
+                <option>Gedung 2</option>
+                <option>Labkom</option>
               </select>
             </div>
           </div>
