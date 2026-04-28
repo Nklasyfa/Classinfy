@@ -25,6 +25,11 @@ const Room = sequelize.define('Room', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  facilities: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: true,
+    defaultValue: [],
+  },
   status: {
     type: DataTypes.ENUM('available', 'maintenance'),
     allowNull: false,

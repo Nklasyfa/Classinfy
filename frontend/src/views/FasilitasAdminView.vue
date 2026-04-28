@@ -21,7 +21,7 @@ const fetchRooms = async () => {
       building: room.location || 'Gedung Pendukung',
       floor: room.name.includes('Lantai') ? room.name.split('Lantai ')[1] : '01',
       capacity: room.capacity,
-      facilities: ['wifi', 'ac_unit'], // dummy facilities fallback since it's not in db scheme
+      facilities: room.facilities || [],
       status: room.status === 'available' ? 'Aktif' : 'Maintenance'
     }))
   } catch (err) {
@@ -77,6 +77,7 @@ const handleAddRoom = async () => {
       name: `Ruang ${formData.value.code} Lantai ${formData.value.floor}`,
       capacity: formData.value.capacity,
       location: formData.value.building,
+      facilities: formData.value.facilities,
       status: formData.value.status === 'Aktif' ? 'available' : 'maintenance'
     }
     await axios.post(`${API_URL}/api/rooms`, payload, { headers: authStore.getAuthHeaders() })
@@ -97,9 +98,23 @@ const closeEditModal = () => {
   isEditModalOpen.value = false
 }
 
-const handleEditRoom = () => {
-  alert('Edit ruangan belum terhubung ke API.')
-  closeEditModal()
+const handleEditRoom = async () => {
+  try {
+    const payload = {
+      code: formData.value.code,
+      name: `Ruang ${formData.value.code} Lantai ${formData.value.floor}`,
+      capacity: formData.value.capacity,
+      location: formData.value.building,
+      facilities: formData.value.facilities,
+      status: formData.value.status === 'Aktif' ? 'available' : 'maintenance'
+    }
+    await axios.put(`${API_URL}/api/rooms/${formData.value.id}`, payload, { headers: authStore.getAuthHeaders() })
+    alert('Ruangan berhasil diupdate!')
+    await fetchRooms()
+    closeEditModal()
+  } catch(err) {
+    alert(err.response?.data?.message || 'Gagal mengupdate ruangan')
+  }
 }
 
 const confirmDelete = (room) => {
@@ -107,10 +122,18 @@ const confirmDelete = (room) => {
   isDeleteModalOpen.value = true
 }
 
-const handleDelete = () => {
-  alert('Delete ruangan belum terhubung ke API.')
-  isDeleteModalOpen.value = false
-  roomToDelete.value = null
+const handleDelete = async () => {
+  if (!roomToDelete.value) return;
+  try {
+    await axios.delete(`${API_URL}/api/rooms/${roomToDelete.value.id}`, { headers: authStore.getAuthHeaders() })
+    alert('Ruangan berhasil dihapus!')
+    await fetchRooms()
+  } catch(err) {
+    alert(err.response?.data?.message || 'Gagal menghapus ruangan')
+  } finally {
+    isDeleteModalOpen.value = false
+    roomToDelete.value = null
+  }
 }
 
 const handleLogout = () => {

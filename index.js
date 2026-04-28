@@ -49,7 +49,7 @@ app.listen(PORT, async () => {
   try {
     // 1. Sync tabel tanpa FK dependencies dulu
     await Role.sync();
-    await Room.sync();
+    await Room.sync({ alter: true });
 
     // 2. Seed roles agar ada data sebelum FK constraint
     await seedRoles();

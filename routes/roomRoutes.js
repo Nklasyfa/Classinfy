@@ -8,5 +8,7 @@ const isAdmin = require('../middlewares/isAdmin');
 router.get('/rooms', verifyToken, roomController.getAllRooms);
 router.get('/rooms/:id', verifyToken, roomController.getRoomById);
 router.post('/rooms', verifyToken, isAdmin, roomController.createRoom);
+router.put('/rooms/:id', verifyToken, isAdmin, roomController.updateRoom);
+router.delete('/rooms/:id', verifyToken, isAdmin, roomController.deleteRoom);
 
 module.exports = router;
