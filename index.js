@@ -4,11 +4,11 @@ const cors = require('cors');
 const { testConnection, sequelize, seedRoles, Role, Room } = require('./models');
 
 // Import Routes
-const authRoutes = require('./routes/authRoutes');
-const roomRoutes = require('./routes/roomRoutes');
-const scheduleRoutes = require('./routes/scheduleRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
-const monitoringRoutes = require('./routes/monitoringRoutes');
+const authRoutes = require('./routes/auth/authRoutes');
+const roomRoutes = require('./routes/room/roomRoutes');
+const scheduleRoutes = require('./routes/schedule/scheduleRoutes');
+const bookingRoutes = require('./routes/booking/bookingRoutes');
+const monitoringRoutes = require('./routes/monitoring/monitoringRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,17 +24,28 @@ app.use('/api', roomRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', monitoringRoutes); // Public - tanpa auth
+app.use('/api', require('./routes/user/userRoutes'));
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     message: '🎓 CLASSINFY API - Sistem Manajemen Peminjaman Fasilitas Kampus',
-    version: '2.0.0-sprint5',
+    version: '2.0.0-sprint4',
     endpoints: {
       auth: ['POST /api/auth/register', 'POST /api/auth/login', 'GET /api/auth/profile'],
       rooms: ['GET /api/rooms', 'GET /api/rooms/:id', 'POST /api/rooms'],
-      schedules: ['GET /api/schedules/:roomId', 'POST /api/schedules', 'PATCH /api/schedules/:id/status', 'GET /api/schedules/:id/logs'],
-      bookings: ['POST /api/bookings/check-conflict', 'POST /api/bookings', 'GET /api/bookings/me', 'GET /api/bookings', 'PATCH /api/bookings/:id/status', 'PATCH /api/bookings/:id/negotiate'],
+      schedules: ['GET /api/schedules/:roomId', 'POST /api/schedules', 'PATCH /api/schedules/:id/status'],
+      bookings: [
+        'POST /api/bookings/check-conflict',
+        'POST /api/bookings',
+        'GET /api/bookings/me',
+        'GET /api/bookings',
+        'PATCH /api/bookings/:id/status',
+        'PATCH /api/bookings/:id/negotiate',
+        'PATCH /api/bookings/:id/respond-negotiation [mahasiswa]',
+        'PATCH /api/bookings/:id/force-override [admin]',
+        'GET /api/bookings/:id/logs [admin]',
+      ],
       monitoring: ['GET /api/monitoring?date=YYYY-MM-DD'],
     },
   });
@@ -74,6 +85,17 @@ app.listen(PORT, async () => {
           END IF;
         END $$
       `);
+      // Tambah kolom isVerified & verifiedAt ke Users jika belum ada
+      await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "isVerified" BOOLEAN DEFAULT TRUE'
+      );
+      await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "verifiedAt" TIMESTAMPTZ'
+      );
+      // Admin (Role 1) & Mahasiswa (Role 2) default verified, lainnya false untuk existing data (opsional)
+      await sequelize.query(
+        'UPDATE "Users" SET "isVerified" = TRUE WHERE "roleId" IN (1, 2) AND "isVerified" IS NULL'
+      );
     } catch (e) {
       // Sudah ada, skip
     }
@@ -125,6 +147,49 @@ app.listen(PORT, async () => {
       console.log('✅ Sprint 5 migration selesai');
     } catch (e) {
       console.error('⚠️ Sprint 5 migration warning:', e.message);
+    }
+
+    // ── Sprint 4 Migrations ──────────────────────────────────────────
+    try {
+      // Booking: tambah ENUM value 'rescheduled'
+      await sequelize.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'rescheduled' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'enum_Bookings_status')) THEN
+            ALTER TYPE "enum_Bookings_status" ADD VALUE 'rescheduled';
+          END IF;
+        EXCEPTION WHEN others THEN NULL;
+        END $$
+      `);
+
+      // Booking: forceOverrideReason
+      await sequelize.query(
+        'ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "forceOverrideReason" TEXT'
+      );
+
+      // Booking: isForceOverride flag
+      await sequelize.query(
+        'ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "isForceOverride" BOOLEAN DEFAULT FALSE'
+      );
+
+      // BookingLogs audit table
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "BookingLogs" (
+          "id" SERIAL PRIMARY KEY,
+          "bookingId" UUID NOT NULL REFERENCES "Bookings"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+          "actorId" UUID NOT NULL,
+          "actorRole" VARCHAR(50),
+          "oldStatus" VARCHAR(50) NOT NULL,
+          "newStatus" VARCHAR(50) NOT NULL,
+          "action" VARCHAR(100) NOT NULL,
+          "notes" TEXT,
+          "isForceOverride" BOOLEAN DEFAULT FALSE,
+          "changedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+
+      console.log('✅ Sprint 4 migration selesai');
+    } catch (e) {
+      console.error('⚠️ Sprint 4 migration warning:', e.message);
     }
 
     // 5. Sync semua model yang tersisa
