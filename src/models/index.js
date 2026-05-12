@@ -1,11 +1,10 @@
 const { sequelize, testConnection } = require('../config/database');
-const Role = require('./definitions/Role');
-const User = require('./definitions/User');
-const Room = require('./definitions/Room');
-const Schedule = require('./definitions/Schedule');
-const Booking = require('./definitions/Booking');
-const ScheduleLog = require('./definitions/ScheduleLog');
-const BookingLog = require('./definitions/BookingLog');
+const Role = require('./Role');
+const User = require('./User');
+const Room = require('./Room');
+const Schedule = require('./Schedule');
+const Booking = require('./Booking');
+const ScheduleLog = require('./ScheduleLog');
 
 // ==================== Associations ====================
 
@@ -24,14 +23,6 @@ Booking.belongsTo(Room, { foreignKey: 'roomId', as: 'room' });
 // Stage 2: User <-> Booking
 User.hasMany(Booking, { foreignKey: 'userId', as: 'bookings' });
 Booking.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-// Sprint 4: Booking <-> BookingLog (audit trail)
-Booking.hasMany(BookingLog, { foreignKey: 'bookingId', as: 'logs' });
-BookingLog.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
-
-// Sprint 4: User <-> BookingLog
-User.hasMany(BookingLog, { foreignKey: 'actorId', as: 'bookingLogs' });
-BookingLog.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 
 // Stage 5: Schedule <-> ScheduleLog
 Schedule.hasMany(ScheduleLog, { foreignKey: 'scheduleId', as: 'logs' });
@@ -69,6 +60,5 @@ module.exports = {
   Schedule,
   Booking,
   ScheduleLog,
-  BookingLog,
   seedRoles,
 };
