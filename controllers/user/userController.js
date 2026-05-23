@@ -4,9 +4,15 @@ const { Op } = require('sequelize');
 // ==================== GET ALL USERS ====================
 exports.getAllUsers = async (req, res) => {
   try {
+    const { Prodi, Matkul, Kelas } = require('../../models');
     const users = await User.findAll({
       attributes: { exclude: ['password'] },
-      include: [{ model: Role, as: 'role', attributes: ['id', 'name'] }],
+      include: [
+        { model: Role, as: 'role', attributes: ['id', 'name'] },
+        { model: Prodi, as: 'prodi', attributes: ['id', 'name'] },
+        { model: Matkul, as: 'matkul', attributes: ['id', 'name'] },
+        { model: Kelas, as: 'kelas', attributes: ['id', 'name'] }
+      ],
       order: [['createdAt', 'DESC']],
     });
 

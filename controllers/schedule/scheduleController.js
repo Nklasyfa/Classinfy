@@ -3,6 +3,31 @@ const { Schedule, Room, ScheduleLog, User } = require('../../models');
 
 const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
+// ==================== GET MY SCHEDULES ====================
+exports.getMySchedules = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const schedules = await Schedule.findAll({
+      where: { pjId: userId },
+      include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+      order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+    });
+
+    const schedulesWithDay = schedules.map(s => ({
+      ...s.toJSON(),
+      dayName: DAY_NAMES[s.dayOfWeek],
+    }));
+
+    res.status(200).json({
+      message: `Jadwal tanggung jawab saya`,
+      data: schedulesWithDay,
+    });
+  } catch (error) {
+    console.error('Error getMySchedules:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
 // ==================== GET SCHEDULES BY ROOM ====================
 exports.getSchedulesByRoom = async (req, res) => {
   try {

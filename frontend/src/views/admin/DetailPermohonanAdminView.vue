@@ -1,31 +1,6 @@
 <template>
-  <div class="bg-[#F0F4F8] grid-texture font-body text-on-surface min-h-screen pb-20">
-    <!-- TopNavBar -->
-    <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[900px] max-w-[95%] rounded-full flex items-center justify-between px-6 py-2 z-50 shadow-[0_8px_32px_rgba(26,60,110,0.06)] bg-white/80 backdrop-blur-[20px]">
-      <div class="flex items-center gap-8">
-        <router-link to="/" class="flex items-center gap-2 text-2xl font-extrabold text-blue-900 tracking-tight cursor-pointer hover:text-blue-700 transition-colors"><span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>CLASSINFY</router-link>
-        <div class="hidden md:flex items-center gap-1">
-          <router-link to="/" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Monitoring</router-link>
-          <router-link to="/admin/dashboard" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Dashboard</router-link>
-          <router-link to="/admin/fasilitas" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Fasilitas</router-link>
-          <router-link to="/admin/permohonan" class="bg-blue-900 text-white rounded-full px-4 py-1.5 transition-all text-sm font-medium cursor-pointer shadow-sm">Permohonan</router-link>
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-3 pl-4 border-l border-outline-variant/20">
-          <div class="text-right hidden sm:block">
-            <p class="text-[11px] font-bold text-primary leading-none uppercase tracking-wider">{{ authStore.user?.role?.name || 'Administrator' }}</p>
-            <p class="text-[10px] text-slate-500 font-medium">{{ authStore.user?.username || 'Admin' }}</p>
-          </div>
-          <div
-            @click="handleLogout"
-            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform"
-          >
-            {{ authStore.user?.username?.charAt(0)?.toUpperCase() || 'A' }}
-          </div>
-        </div>
-      </div>
-    </nav>
+  <div class="admin-bg-grid font-body text-on-surface min-h-screen pb-20 relative overflow-x-hidden">
+    <AdminNavbar />
 
     <main class="max-w-7xl mx-auto px-6 pt-32 space-y-8">
       
@@ -259,6 +234,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
+import AdminNavbar from '../../components/layout/AdminNavbar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -421,12 +397,6 @@ const getLogActionLabel = (action) => {
   </script>
 
 <style scoped>
-.grid-texture {
-    background-image: 
-        linear-gradient(to right, rgba(26, 60, 110, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(26, 60, 110, 0.05) 1px, transparent 1px);
-    background-size: 24px 24px;
-}
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

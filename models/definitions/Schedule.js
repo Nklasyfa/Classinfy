@@ -37,6 +37,10 @@ const Schedule = sequelize.define('Schedule', {
     allowNull: false,
     defaultValue: 'aktif',
   },
+  pjId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
 }, {
   tableName: 'Schedules',
   timestamps: true,

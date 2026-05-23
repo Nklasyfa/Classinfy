@@ -10,6 +10,7 @@ const navLinks = [
   { name: 'Monitoring', path: '/' },
   { name: 'Dashboard', path: '/admin/dashboard' },
   { name: 'Fasilitas', path: '/admin/fasilitas' },
+  { name: 'Akademik', path: '/admin/akademik' },
   { name: 'Permohonan', path: '/admin/permohonan' },
   { name: 'Users', path: '/admin/users' },
 ]

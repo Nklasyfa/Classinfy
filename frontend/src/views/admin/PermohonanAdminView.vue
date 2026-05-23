@@ -1,76 +1,31 @@
 <template>
-  <div class="bg-[#F0F4F8] grid-texture font-body text-on-surface min-h-screen pb-20">
-    <!-- TopNavBar -->
-    <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[900px] max-w-[95%] rounded-full flex items-center justify-between px-6 py-2 z-50 shadow-[0_8px_32px_rgba(26,60,110,0.06)] bg-white/80 backdrop-blur-[20px]">
-      <div class="flex items-center gap-8">
-        <router-link to="/" class="flex items-center gap-2 text-2xl font-extrabold text-blue-900 tracking-tight cursor-pointer hover:text-blue-700 transition-colors"><span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>CLASSINFY</router-link>
-        <div class="hidden md:flex items-center gap-1">
-          <router-link to="/" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Monitoring</router-link>
-          <router-link to="/admin/dashboard" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Dashboard</router-link>
-          <router-link to="/admin/fasilitas" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Fasilitas</router-link>
-          <router-link to="/admin/permohonan" class="bg-blue-900 text-white rounded-full px-4 py-1.5 transition-all text-sm font-medium cursor-pointer shadow-sm">Permohonan</router-link>
-          <router-link to="/admin/users" class="text-slate-600 hover:text-blue-900 px-4 py-1.5 text-sm font-medium cursor-pointer transition-colors">Users</router-link>
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-3 pl-4 border-l border-outline-variant/20">
-          <div class="text-right hidden sm:block">
-            <p class="text-[11px] font-bold text-primary leading-none uppercase tracking-wider">{{ authStore.user?.role?.name || 'Administrator' }}</p>
-            <p class="text-[10px] text-slate-500 font-medium">{{ authStore.user?.username || 'Admin' }}</p>
-          </div>
-          <div
-            @click="handleLogout"
-            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform"
-            title="Klik untuk Logout"
-          >
-            {{ authStore.user?.username?.charAt(0)?.toUpperCase() || 'A' }}
-          </div>
-        </div>
-      </div>
-    </nav>
+  <div class="admin-bg-grid font-body text-on-surface min-h-screen pb-20 relative overflow-x-hidden">
+    <AdminNavbar />
 
-    <main class="max-w-7xl mx-auto px-6 pt-32 space-y-10">
-      <section class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
-        <div class="relative z-10">
-          <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-primary mb-2">Daftar Permohonan Peminjaman</h1>
-          <p class="text-on-surface-variant font-medium">Kelola dan proses semua permohonan masuk secara tersistem</p>
+    <main class="max-w-7xl mx-auto px-6 pt-32 space-y-10 relative z-10">
+      <!-- Header Moment -->
+      <header class="flex justify-between items-end">
+        <div class="space-y-1">
+          <h1 class="text-4xl font-extrabold tracking-tight text-primary">Daftar Permohonan Peminjaman</h1>
+          <p class="text-slate-500 font-medium">Monitoring antrian dan log permohonan fasilitas.</p>
         </div>
-        <div class="flex flex-wrap gap-3 z-10">
-          <div class="bg-error-container text-on-error-container px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-sm">
-            <span class="material-symbols-outlined text-lg">report</span>
-            Conflict ({{ conflictCount }})
-          </div>
-          <div class="bg-surface-container-high text-primary px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-sm">
-            <span class="material-symbols-outlined text-lg">pending</span>
-            Pending ({{ pendingCount }})
-          </div>
-        </div>
-        <div class="absolute -right-8 -bottom-8 opacity-10">
-          <span class="material-symbols-outlined text-[160px]">inventory</span>
-        </div>
-      </section>
+      </header>
 
-      <section class="bg-surface-container-lowest p-6 rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="md:col-span-1 relative">
-            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input v-model="searchQuery" class="w-full pl-11 pr-4 py-3 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary-fixed-dim transition-all outline-none text-sm" placeholder="Cari nama pemohon atau gedung..." type="text"/>
+      <!-- Main Request Status Table -->
+      <section class="bg-surface-container-lowest rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] overflow-hidden border border-outline-variant/10 min-h-[400px]">
+        <div class="p-6 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-surface-container-low/50">
+          <div class="flex items-center gap-1 p-1 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10">
+            <button v-for="tab in ['Semua', 'Pending', 'Konflik', 'Approved', 'Rejected']" :key="tab"
+                    @click="activeTab = tab"
+                    :class="activeTab === tab ? 'px-4 py-2 text-xs font-bold rounded-lg bg-surface-container-low text-primary shadow-sm' : 'px-4 py-2 text-xs font-medium text-slate-500 hover:text-primary cursor-pointer'">
+              {{ tab }}
+            </button>
+          </div>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+            <input v-model="searchQuery" class="pl-9 pr-4 py-2 bg-white border border-outline-variant/20 rounded-full text-xs w-64 focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="Search request ID..." type="text"/>
           </div>
         </div>
-        <div class="flex flex-wrap gap-2 pt-2">
-          <button @click="activeTab = 'Semua'" :class="tabClass('Semua')">Semua</button>
-          <button @click="activeTab = 'Pending'" :class="tabClass('Pending')" class="flex items-center gap-2">
-            Perlu Review <span v-if="pendingCount > 0" class="bg-white px-2 rounded-full text-xs text-primary">{{ pendingCount }}</span>
-          </button>
-          <button @click="activeTab = 'Konflik'" :class="tabClass('Konflik')" class="flex items-center gap-2">
-            Konflik <span v-if="conflictCount > 0" class="bg-error text-white px-2 rounded-full text-xs">{{ conflictCount }}</span>
-          </button>
-          <button @click="activeTab = 'Approved'" :class="tabClass('Approved')">Approved</button>
-          <button @click="activeTab = 'Rejected'" :class="tabClass('Rejected')">Rejected</button>
-        </div>
-      </section>
-
-      <section class="bg-surface-container-lowest rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] overflow-hidden min-h-[400px]">
         <div v-if="isLoading" class="p-16 flex flex-col items-center justify-center gap-4">
           <span class="material-symbols-outlined text-4xl text-primary animate-spin">sync</span>
           <p class="text-on-surface-variant font-medium">Memuat data permohonan...</p>
@@ -81,57 +36,32 @@
           <p class="text-on-surface-variant font-medium">Tidak ada permohonan ditemukan.</p>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr class="bg-surface-container-low/50 text-outline text-xs font-bold uppercase tracking-widest">
-                <th class="px-6 py-5">Pemohon</th>
-                <th class="px-6 py-5">Gedung / Ruangan</th>
-                <th class="px-6 py-5">Waktu Peminjaman</th>
-                <th class="px-6 py-5">Prioritas</th>
-                <th class="px-6 py-5">Status</th>
-                <th class="px-6 py-5 text-right">Aksi</th>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-surface-container-low/30 border-b border-outline-variant/10">
+              <tr>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Pemohon</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Ruangan</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Waktu</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Prioritas</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Status</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest text-center">Aksi</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-outline-variant/10">
               <tr v-for="booking in filteredBookings" :key="booking.id" :class="getRowClass(booking.status)">
-                <td class="px-6 py-5">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" :class="getAvatarClass(booking.status)">
-                      {{ booking.user?.username?.substring(0, 2).toUpperCase() || 'U' }}
-                    </div>
-                    <div>
-                      <div class="font-bold text-on-surface">{{ booking.user?.username || 'Guest' }}</div>
-                      <div class="text-xs text-on-surface-variant max-w-[150px] truncate">{{ booking.purpose }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-5">
-                  <div class="font-medium">{{ booking.room?.name || 'Ruangan' }}</div>
-                  <div class="text-xs text-on-surface-variant">{{ booking.room?.code || '-' }}</div>
-                </td>
-                <td class="px-6 py-5">
-                  <div class="font-medium flex items-center gap-1" :class="booking.status === 'needs_negotiation' ? 'text-red-600' : ''">
-                    <span v-if="booking.status === 'needs_negotiation'" class="material-symbols-outlined text-sm">warning</span>
-                    {{ formatDate(booking.bookingDate) }}
-                  </div>
-                  <div class="text-xs text-on-surface-variant">{{ booking.startTime.slice(0,5) }} - {{ booking.endTime.slice(0,5) }} WIB</div>
-                </td>
-                <td class="px-6 py-5">
+                <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-900 font-extrabold' : 'text-slate-700'">{{ booking.user?.username || 'Anonim' }}</td>
+                <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-900 font-bold' : 'text-slate-700'">{{ booking.room?.name || '-' }}</td>
+                <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-700' : 'text-slate-500'">{{ formatDate(booking.bookingDate) }}, {{ booking.startTime.slice(0,5) }}</td>
+                <td class="px-6 py-4">
                   <span class="text-white text-[10px] font-extrabold px-2 py-1 rounded" :class="getPriorityColor(booking.activityWeight)">P{{ booking.activityWeight }}</span>
                 </td>
-                <td class="px-6 py-5">
-                  <span class="text-xs font-bold px-2 py-1 rounded-full uppercase" :class="getStatusPillClass(booking.status)">{{ getStatusString(booking.status) }}</span>
+                <td class="px-6 py-4">
+                  <span :class="getStatusChipConfig(booking.status).class" class="status-chip">{{ getStatusChipConfig(booking.status).label }}</span>
                 </td>
-                <td class="px-6 py-5 text-right">
-                  <button v-if="booking.status === 'needs_negotiation'" @click="goToDetail(booking.id)" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition-transform cursor-pointer">Selesaikan Konflik</button>
-                  <button v-else-if="booking.status === 'pending'" @click="goToDetail(booking.id)" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition-transform cursor-pointer">Tinjau</button>
-                  <span v-else-if="booking.status === 'approved'" class="text-green-600 font-bold text-sm flex items-center justify-end gap-1 cursor-pointer hover:underline" @click="goToDetail(booking.id)">
-                    <span class="material-symbols-outlined text-sm">visibility</span> Cek Detail
-                  </span>
-                  <span v-else class="text-slate-500 font-bold text-sm flex items-center justify-end gap-1 cursor-pointer hover:underline" @click="goToDetail(booking.id)">
-                    <span class="material-symbols-outlined text-sm">visibility</span> Cek Detail
-                  </span>
+                <td class="px-6 py-4 text-center">
+                  <button v-if="booking.status === 'needs_negotiation'" @click="goToDetail(booking.id)" class="bg-red-600 text-white text-[10px] font-extrabold px-3 py-1.5 rounded animate-pulse cursor-pointer hover:bg-red-700">Resolve</button>
+                  <span v-else @click="goToDetail(booking.id)" class="material-symbols-outlined cursor-pointer" :class="booking.status === 'pending' ? 'text-amber-500 hover:text-amber-700' : 'text-slate-400 hover:text-primary'">{{ booking.status === 'pending' ? 'visibility' : 'more_vert' }}</span>
                 </td>
               </tr>
             </tbody>
@@ -167,6 +97,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
+import AdminNavbar from '../../components/layout/AdminNavbar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -263,29 +194,32 @@ const getPriorityColor = (weight) => {
   }
 }
 
-const getStatusString = (status) => {
-  if (status === 'needs_negotiation') return 'Konflik'
-  return status
-}
-
-const getStatusPillClass = (status) => {
-  if (status === 'needs_negotiation') return 'bg-red-100 text-red-700'
-  if (status === 'pending') return 'bg-amber-100 text-amber-700'
-  if (status === 'approved') return 'bg-green-100 text-green-700'
-  if (status === 'rejected' || status === 'cancelled') return 'bg-slate-200 text-slate-700'
-  return 'bg-slate-100 text-slate-600'
+const getStatusChipConfig = (status) => {
+  switch (status) {
+    case 'pending': return { class: 'bg-[#F59E0B]/20 text-[#D97706]', label: 'Under Review' }
+    case 'needs_negotiation': return { class: 'bg-[#DC2626]/20 text-[#DC2626]', label: 'Conflict Detected' }
+    case 'approved': return { class: 'bg-[#16A34A]/20 text-[#16A34A]', label: 'Approved' }
+    case 'rejected': return { class: 'bg-[#991B1B]/20 text-[#991B1B]', label: 'Rejected' }
+    case 'cancelled': return { class: 'bg-[#9CA3AF]/20 text-[#4B5563]', label: 'Cancelled' }
+    case 'rescheduled': return { class: 'bg-[#0EA5E9]/20 text-[#0EA5E9]', label: 'Rescheduled' }
+    default: return { class: 'bg-slate-200 text-slate-600', label: status }
+  }
 }
 
 </script>
 
 <style scoped>
-.grid-texture {
-    background-image: 
-        linear-gradient(to right, rgba(26, 60, 110, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(26, 60, 110, 0.05) 1px, transparent 1px);
-    background-size: 24px 24px;
-}
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.status-chip {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 </style>

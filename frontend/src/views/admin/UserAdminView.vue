@@ -90,130 +90,138 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="bg-slate-50 font-body text-on-surface min-h-screen relative overflow-x-hidden">
-    <!-- Background Decoration -->
-    <div class="fixed inset-0 pointer-events-none opacity-[0.4]" 
-         style="background-image: radial-gradient(#1a3c6e 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
-
+  <div class="admin-bg-grid font-body text-on-surface min-h-screen relative overflow-x-hidden">
     <AdminNavbar />
 
     <!-- Main Content -->
-    <main class="pt-32 pb-20 px-8 max-w-7xl mx-auto relative z-10">
-      <!-- Search Bar Floating -->
-      <div class="mb-10 flex justify-end">
-        <div class="relative w-full max-w-md">
-          <input v-model="searchQuery" 
-                 class="w-full bg-white/80 backdrop-blur shadow-sm border border-slate-200 rounded-2xl py-3 px-12 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all" 
-                 placeholder="Cari nama, email, atau ID..." type="text"/>
-          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative z-10 space-y-10">
+      <!-- Header Moment -->
+      <header class="flex justify-between items-end">
+        <div class="space-y-1">
+          <h1 class="text-4xl font-extrabold tracking-tight text-primary">Direktori Pengguna</h1>
+          <p class="text-slate-500 font-medium">Manajemen otorisasi dan kontrol akses pengguna.</p>
         </div>
-      </div>
-
-      <!-- Header & Stats Bento -->
-      <header class="mb-10">
-        <h1 class="text-4xl font-black text-[#1A3C6E] tracking-tight mb-8">Direktori Pengguna</h1>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div v-for="(val, key) in { 'Total Pengguna': stats.total, 'Mahasiswa': stats.mhs, 'Mahasiswa PJ': stats.pj, 'Admin / Tendik': stats.admin }" 
-               :key="key"
-               class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{{ key }}</p>
-            <h3 class="text-4xl font-black text-[#1A3C6E]">{{ val }}</h3>
-          </div>
+        <!-- Search Bar Floating -->
+        <div class="relative w-full max-w-md">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input v-model="searchQuery" 
+                 class="w-full bg-white border border-outline-variant/20 rounded-full py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary-fixed-dim transition-all outline-none" 
+                 placeholder="Cari nama, email..." type="text"/>
         </div>
       </header>
 
-      <!-- Filters -->
-      <section class="mb-8">
-        <div class="flex bg-white/50 backdrop-blur p-1.5 rounded-full border border-slate-200 w-fit gap-1">
-          <button v-for="tab in ['Semua', 'Perlu Verifikasi', 'Aktif']" 
-                  :key="tab"
-                  @click="filterStatus = tab"
-                  :class="filterStatus === tab ? 'bg-[#1A3C6E] text-white shadow-lg' : 'text-slate-500 hover:bg-white'"
-                  class="px-8 py-2.5 rounded-full text-sm font-black transition-all duration-300">
-            {{ tab }}
-          </button>
+      <!-- Stats Bento -->
+      <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div v-for="(val, key) in { 'Total Pengguna': stats.total, 'Mahasiswa': stats.mhs, 'Mahasiswa PJ': stats.pj, 'Admin / Tendik': stats.admin }" 
+             :key="key"
+             class="bg-surface-container-lowest p-6 rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-outline-variant/10">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{{ key }}</p>
+          <h3 class="text-3xl font-extrabold text-primary">{{ val }}</h3>
         </div>
       </section>
 
-      <!-- User Directory Table -->
-      <div class="bg-white rounded-[2rem] shadow-xl shadow-blue-900/5 overflow-hidden border border-slate-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-              <th class="px-8 py-6">Pengguna</th>
-              <th class="px-8 py-6">Email</th>
-              <th class="px-8 py-6">Role</th>
-              <th class="px-8 py-6">Status</th>
-              <th class="px-8 py-6 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-50">
+      <!-- Filters -->
+      <section class="bg-surface-container-lowest rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] overflow-hidden border border-outline-variant/10">
+        <div class="p-6 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-surface-container-low/50">
+          <div class="flex items-center gap-1 p-1 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10">
+            <button v-for="tab in ['Semua', 'Perlu Verifikasi', 'Aktif']" 
+                    :key="tab"
+                    @click="filterStatus = tab"
+                    :class="filterStatus === tab ? 'px-4 py-2 text-xs font-bold rounded-lg bg-surface-container-low text-primary shadow-sm' : 'px-4 py-2 text-xs font-medium text-slate-500 hover:text-primary cursor-pointer'">
+              {{ tab }}
+            </button>
+          </div>
+        </div>
+
+        <!-- User Directory Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead class="bg-surface-container-low/30 border-b border-outline-variant/10">
+              <tr>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Pengguna</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Email</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Akademik</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Role</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">Status</th>
+                <th class="px-6 py-4 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/5">
             <tr v-if="loading" v-for="i in 3" :key="i" class="animate-pulse">
-              <td colspan="5" class="px-8 py-10 h-16 bg-slate-50/20"></td>
+              <td colspan="5" class="px-6 py-10 h-16 bg-slate-50/20"></td>
             </tr>
-            <tr v-else v-for="user in filteredUsers" :key="user.id" class="group hover:bg-blue-50/30 transition-colors">
-              <td class="px-8 py-6">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-[#1A3C6E] font-black text-xl shadow-inner group-hover:bg-white transition-colors">
+            <tr v-else v-for="user in filteredUsers" :key="user.id" class="hover:bg-slate-50/50 transition-colors group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-primary font-bold text-xs shadow-inner group-hover:bg-white transition-colors">
                     {{ user.username.charAt(0).toUpperCase() }}
                   </div>
                   <div>
-                    <p class="font-black text-[#1A3C6E] text-lg">{{ user.username }}</p>
-                    <p class="text-[10px] font-bold text-slate-400 tracking-wider">ID: {{ user.id.split('-')[0] }}</p>
+                    <p class="font-bold text-primary text-xs">{{ user.username }}</p>
+                    <p class="text-[10px] font-medium text-slate-400">ID: {{ user.id.split('-')[0] }}</p>
                   </div>
                 </div>
               </td>
-              <td class="px-8 py-6 text-sm font-bold text-slate-500">{{ user.email }}</td>
-              <td class="px-8 py-6">
+              <td class="px-6 py-4 text-xs font-medium text-slate-600">{{ user.email }}</td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col gap-0.5">
+                  <span v-if="user.prodi" class="text-[10px] font-bold text-primary">{{ user.prodi.name }}</span>
+                  <span v-if="user.matkul" class="text-[10px] text-slate-500">{{ user.matkul.name }}</span>
+                  <span v-if="user.kelas" class="text-[10px] font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded-md inline-block w-max mt-0.5">{{ user.kelas.name }}</span>
+                  <span v-if="!user.prodi && !user.matkul && !user.kelas" class="text-[10px] text-slate-300 italic">-</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
                 <div class="relative">
                   <button @click="activeDropdownId = activeDropdownId === user.id ? null : user.id" 
-                          class="flex items-center gap-2 bg-slate-100 text-[#1A3C6E] px-4 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                          class="flex items-center gap-1 bg-surface-container-lowest text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-all cursor-pointer">
                     {{ user.role?.name || 'Mahasiswa' }}
-                    <span class="material-symbols-outlined text-xs">expand_more</span>
+                    <span class="material-symbols-outlined text-[14px]">expand_more</span>
                   </button>
                   
                   <div v-if="activeDropdownId === user.id" 
-                       class="absolute left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl z-20 border border-slate-100 py-3 animate-in fade-in zoom-in duration-200">
+                       class="absolute left-0 mt-2 w-48 bg-surface-container-lowest rounded-xl shadow-xl z-20 border border-outline-variant/10 py-2 animate-in fade-in zoom-in duration-200">
                     <button v-for="role in roles" :key="role.id"
                             @click="updateRole(user.id, role.id)"
-                            class="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 text-xs font-bold text-slate-600 transition-colors">
-                      <span class="material-symbols-outlined text-sm">{{ role.icon }}</span>
+                            class="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-container-low text-xs font-bold text-slate-600 transition-colors cursor-pointer">
+                      <span class="material-symbols-outlined text-[16px]">{{ role.icon }}</span>
                       {{ role.name }}
-                      <span v-if="user.roleId === role.id" class="ml-auto material-symbols-outlined text-xs text-green-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                      <span v-if="user.roleId === role.id" class="ml-auto material-symbols-outlined text-[16px] text-[#16A34A]">check_circle</span>
                     </button>
                   </div>
                 </div>
               </td>
-              <td class="px-8 py-6">
-                <div class="flex items-center gap-2">
-                  <span :class="user.isVerified ? 'bg-green-500 shadow-green-200' : 'bg-amber-500 shadow-amber-200'" class="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]"></span>
-                  <span :class="user.isVerified ? 'text-green-600' : 'text-amber-600'" class="text-xs font-black">
-                    {{ user.isVerified ? 'Terverifikasi' : 'Pending' }}
-                  </span>
-                </div>
+              <td class="px-6 py-4">
+                <span v-if="user.isVerified" class="status-chip bg-[#16A34A]/20 text-[#16A34A]"><span class="material-symbols-outlined text-[14px]">check_circle</span>Terverifikasi</span>
+                <span v-else class="status-chip bg-[#F59E0B]/20 text-[#D97706]"><span class="material-symbols-outlined text-[14px]">visibility</span>Pending</span>
               </td>
-              <td class="px-8 py-6 text-right">
+              <td class="px-6 py-4 text-right">
                 <button @click="toggleVerification(user)" 
                         :class="user.isVerified ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'"
-                        class="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer border border-transparent hover:border-current/20">
                   {{ user.isVerified ? 'Suspend' : 'Verify' }}
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
+        </div>
+      </section>
     </main>
   </div>
 </template>
 
 <style scoped>
-/* Custom animations or transitions */
-</style>
-
-
-<style scoped>
 .router-link-active {
   color: #1A3C6E;
+}
+.status-chip {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 </style>

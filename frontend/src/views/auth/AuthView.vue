@@ -72,6 +72,31 @@
             </div>
           </div>
 
+          <!-- Prodi, Matkul & Kelas (Register only) -->
+          <div v-if="!isLogin" class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Prodi</label>
+              <select v-model="selectedProdiId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+                <option value="" disabled>Pilih Prodi</option>
+                <option v-for="p in prodis" :key="p.id" :value="p.id">{{ p.name }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Matkul</label>
+              <select v-model="selectedMatkulId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+                <option value="" disabled>Pilih Matkul</option>
+                <option v-for="m in matkuls" :key="m.id" :value="m.id">{{ m.name }}</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Kelas (Opsional)</label>
+              <select v-model="selectedKelasId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+                <option value="">Pilih Kelas (Boleh dikosongkan)</option>
+                <option v-for="k in kelasList" :key="k.id" :value="k.id">{{ k.name }}</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Email -->
           <div>
             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1 font-label">Email</label>
@@ -184,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
@@ -200,11 +225,33 @@ const username = ref('')
 const email = ref('')
 const password = ref('')
 const selectedRoleId = ref(2)
+const selectedProdiId = ref('')
+const selectedMatkulId = ref('')
+const selectedKelasId = ref('')
+
+const prodis = ref([])
+const matkuls = ref([])
+const kelasList = ref([])
 
 const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
+
+const fetchAkademik = async () => {
+  try {
+    const pRes = await axios.get(`${API_URL}/api/prodis`)
+    prodis.value = pRes.data.data || []
+    const mRes = await axios.get(`${API_URL}/api/matkuls`)
+    matkuls.value = mRes.data.data || []
+    const kRes = await axios.get(`${API_URL}/api/kelas`)
+    kelasList.value = kRes.data.data || []
+  } catch(e) { console.error('Gagal memuat data akademik') }
+}
+
+onMounted(() => {
+  fetchAkademik()
+})
 
 const roleOptions = [
   { id: 2, label: 'Mahasiswa', icon: 'person' },
@@ -244,6 +291,9 @@ const handleSubmit = async () => {
         email: email.value,
         password: password.value,
         roleId: selectedRoleId.value,
+        prodiId: selectedProdiId.value || undefined,
+        matkulId: selectedMatkulId.value || undefined,
+        kelasId: selectedKelasId.value || undefined,
       })
 
       successMsg.value = 'Registrasi berhasil! Mengalihkan ke login...'

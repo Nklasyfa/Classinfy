@@ -146,68 +146,63 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="font-body text-on-background min-h-screen relative overflow-x-hidden bg-background">
-    <!-- Grid Texture Background -->
-    <div class="fixed inset-0 pointer-events-none" style="background-image: radial-gradient(circle, #1a3c6e 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05;"></div>
-    
+  <div class="admin-bg-grid font-body text-on-surface min-h-screen relative overflow-x-hidden">
     <AdminNavbar />
 
     <!-- Main Content Area -->
-    <main class="pt-32 pb-32 px-8 max-w-[1400px] mx-auto relative z-10">
-      <!-- Editorial Header -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div>
-          <h1 class="text-5xl md:text-6xl font-extrabold text-primary tracking-tight leading-none mb-4">
-            Master Data <br/><span class="text-secondary">Ruangan</span>
-          </h1>
-          <p class="text-on-surface-variant max-w-md font-medium">
-            Kelola infrastruktur kampus dengan kontrol presisi. Inventarisir gedung, kapasitas, dan status operasional dalam satu layar.
-          </p>
+    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto relative z-10 space-y-10">
+      <!-- Header Moment -->
+      <header class="flex justify-between items-end">
+        <div class="space-y-1">
+          <h1 class="text-4xl font-extrabold tracking-tight text-primary">Fasilitas Kampus</h1>
+          <p class="text-slate-500 font-medium">Manajemen infrastruktur dan kapasitas ruangan.</p>
         </div>
         <div class="flex gap-4">
-          <button @click="openAddModal" class="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all cursor-pointer">
-            <span class="material-symbols-outlined">add</span>
-            Tambah Ruangan
+          <button @click="openAddModal" class="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-primary/10 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            Tambah Fasilitas
           </button>
         </div>
-      </div>
+      </header>
 
-      <!-- Filter Bar -->
-      <div class="bg-surface-container-low p-6 rounded-xl mb-8 flex flex-wrap items-center gap-4 border border-outline-variant/10">
-        <div class="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 rounded-lg text-sm font-semibold text-primary shadow-sm border border-outline-variant/10">
-          <span class="material-symbols-outlined text-lg">filter_list</span> Filters
+      <!-- Main Table Section -->
+      <section class="bg-surface-container-lowest rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.06)] overflow-hidden border border-outline-variant/10">
+        <!-- Filter Bar -->
+        <div class="p-6 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-surface-container-low/50">
+          <div class="flex items-center gap-4">
+            <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-full text-xs font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
+              <option>Semua Gedung</option>
+              <option>Gedung 1</option>
+              <option>Gedung 2</option>
+              <option>Labkom</option>
+            </select>
+            <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-full text-xs font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
+              <option>Semua Status</option>
+              <option>Aktif</option>
+              <option>Maintenance</option>
+              <option>Nonaktif</option>
+            </select>
+          </div>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+            <input class="pl-9 pr-4 py-2 bg-white border border-outline-variant/20 rounded-full text-xs w-64 focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="Cari ruangan..." type="text"/>
+          </div>
         </div>
-        <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
-          <option>Semua Gedung</option>
-          <option>Gedung 1</option>
-          <option>Gedung 2</option>
-          <option>Labkom</option>
-        </select>
-        <select class="bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-fixed-dim px-4 py-2 min-w-[140px] shadow-sm outline-none cursor-pointer">
-          <option>Semua Status</option>
-          <option>Aktif</option>
-          <option>Maintenance</option>
-          <option>Nonaktif</option>
-        </select>
-        <div class="ml-auto flex items-center gap-2 text-sm text-slate-500 font-medium">
-          <span>Showing {{ rooms.length }} rooms</span>
-        </div>
-      </div>
 
-      <!-- Data Table Section -->
-      <div class="bg-surface-container-lowest rounded-2xl shadow-[0_8px_32px_rgba(26,60,110,0.06)] overflow-hidden border border-outline-variant/10">
-        <table class="w-full text-left border-collapse">
-          <thead class="bg-surface-container-low/50 border-b border-outline-variant/10">
-            <tr>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest">Kode Ruang</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest">Gedung</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest text-center">Lantai</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest text-center">Kapasitas</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest">Fasilitas</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest">Status</th>
-              <th class="px-6 py-5 font-bold text-primary uppercase text-xs tracking-widest text-right">Aksi</th>
-            </tr>
-          </thead>
+        <!-- Data Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-surface-container-low/30 border-b border-outline-variant/10">
+              <tr>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest">Kode Ruang</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest">Gedung</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest text-center">Lantai</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest text-center">Kapasitas</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest">Fasilitas</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest">Status</th>
+                <th class="px-6 py-4 font-extrabold text-slate-500 uppercase text-[11px] tracking-widest text-right">Aksi</th>
+              </tr>
+            </thead>
           <tbody class="divide-y divide-outline-variant/5">
             <tr v-for="room in rooms" :key="room.id" class="hover:bg-slate-50/50 transition-colors group">
               <td class="px-6 py-4 font-bold text-primary">{{ room.code }}</td>
@@ -233,21 +228,23 @@ const handleLogout = () => {
             </tr>
           </tbody>
         </table>
+        </div>
         
         <!-- Pagination -->
         <div class="bg-surface-container-low/30 px-6 py-4 flex items-center justify-between border-t border-outline-variant/10">
-          <button class="text-xs font-bold text-primary hover:bg-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1 shadow-sm border border-outline-variant/10 cursor-pointer">
-            <span class="material-symbols-outlined text-sm">chevron_left</span> Previous
-          </button>
-          <div class="flex gap-2">
+          <span class="text-xs text-slate-500">Showing {{ rooms.length }} rooms</span>
+          <div class="flex items-center gap-2">
+            <button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">chevron_left</span>
+            </button>
             <button class="w-8 h-8 rounded-lg bg-primary text-white text-xs font-bold shadow-md cursor-pointer">1</button>
             <button class="w-8 h-8 rounded-lg hover:bg-white text-xs font-bold transition-colors text-slate-600 border border-transparent shadow-sm cursor-pointer">2</button>
+            <button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">chevron_right</span>
+            </button>
           </div>
-          <button class="text-xs font-bold text-primary hover:bg-white px-4 py-2 rounded-lg transition-colors flex items-center gap-1 shadow-sm border border-outline-variant/10 cursor-pointer">
-            Next <span class="material-symbols-outlined text-sm">chevron_right</span>
-          </button>
         </div>
-      </div>
+      </section>
     </main>
 
     <!-- Modals -->

@@ -62,6 +62,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: [1] }, // Hanya Admin
     },
     {
+      path: '/admin/akademik',
+      name: 'admin-akademik',
+      component: () => import('../views/admin/MasterAkademikAdminView.vue'),
+      meta: { requiresAuth: true, roles: [1] }, // Hanya Admin
+    },
+    {
       path: '/admin/permohonan',
       name: 'admin-permohonan',
       component: PermohonanAdminView,

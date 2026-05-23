@@ -97,8 +97,24 @@ exports.getMonitoringData = async (req, res) => {
             batal: 'dibatalkan',  // Kelas dibatalkan
           };
 
+          let computedStatus = scheduleStatusMap[matchedSchedule.status] || 'terjadwal';
+
+          // Fitur Time: Jika hari ini dan waktu sekarang berada di dalam range jadwal, ubah status jadi 'dipakai'
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          
+          if (dateString === todayStr && matchedSchedule.status === 'aktif') {
+            const currentHour = today.getHours().toString().padStart(2, '0');
+            const currentMinute = today.getMinutes().toString().padStart(2, '0');
+            const currentTime = `${currentHour}:${currentMinute}:00`;
+            
+            if (currentTime >= matchedSchedule.startTime && currentTime <= matchedSchedule.endTime) {
+              computedStatus = 'dipakai';
+            }
+          }
+
           return {
-            status: scheduleStatusMap[matchedSchedule.status] || 'terjadwal',
+            status: computedStatus,
             title: matchedSchedule.activity,
             person: matchedSchedule.semester || '-',
             scheduleId: matchedSchedule.id,
@@ -139,6 +155,6 @@ exports.getMonitoringData = async (req, res) => {
     });
   } catch (error) {
     console.error('Error getMonitoringData:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+    res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message });
   }
 };
