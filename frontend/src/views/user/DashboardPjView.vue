@@ -5,30 +5,29 @@
 
     <!-- Navigation -->
     <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-6 pointer-events-none">
-      <div class="bg-white/80 backdrop-blur-md rounded-full shadow-[0_8px_32px_rgba(26,60,110,0.06)] h-[60px] max-w-[900px] w-full flex items-center justify-between px-6 pointer-events-auto">
+      <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full shadow-[0_8px_32px_rgba(26,60,110,0.06)] h-[60px] max-w-[900px] w-full flex items-center justify-between px-6 pointer-events-auto">
         <router-link to="/" class="flex items-center gap-2 cursor-pointer group">
-          <span class="material-symbols-outlined text-primary text-2xl group-hover:text-secondary transition-colors" style="font-variation-settings: 'FILL' 1;">school</span>
+          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span class="text-white text-xs font-extrabold tracking-tighter">C</span>
+          </div>
           <span class="font-extrabold text-primary tracking-tighter text-xl group-hover:text-secondary transition-colors">CLASSINFY</span>
         </router-link>
-        
-        <div class="hidden md:flex items-center gap-2 pointer-events-auto">
-          <router-link to="/" class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300">Monitoring</router-link>
-          <a class="bg-[#1A3C6E] text-white rounded-full px-6 py-2 font-medium text-sm tracking-tight transition-all duration-300 scale-105" href="#">Dashboard</a>
+
+        <div class="hidden md:flex items-center gap-2">
+          <router-link to="/dashboard" class="bg-[#1A3C6E] text-white rounded-full px-6 py-2 font-medium text-sm tracking-tight transition-all duration-300 scale-105">Dashboard</router-link>
           <a class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300" href="#">Jadwal Saya</a>
           <a class="text-primary/70 px-4 font-medium text-sm tracking-tight hover:text-[#1A3C6E] transition-all duration-300" href="#">Riwayat</a>
         </div>
-        
+
         <div class="flex items-center gap-4">
-          <button class="relative p-2 text-primary/70 hover:scale-110 transition-transform">
+          <button class="relative p-2 text-primary/70 hover:scale-110 transition-transform cursor-pointer">
             <span class="material-symbols-outlined">notifications</span>
             <span class="absolute top-1 right-1 w-4 h-4 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">2</span>
           </button>
-          
-          <div class="flex items-center gap-2 pl-2 cursor-pointer group relative" @click="handleLogout">
-            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm editorial-shadow transition-transform group-hover:scale-105">
+          <div class="flex items-center gap-2 pl-2 group relative cursor-pointer" @click="handleLogout">
+            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm editorial-shadow group-hover:scale-105 transition-transform">
               {{ initials }}
             </div>
-            <!-- Logout tooltip hint -->
             <div class="absolute top-full mt-2 right-0 bg-white shadow-lg rounded-lg py-1 px-3 text-xs font-bold text-error opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
               Keluar
             </div>
@@ -39,18 +38,17 @@
 
     <!-- Content Canvas -->
     <main class="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto space-y-12">
-      
       <!-- Greeting Section -->
       <section class="flex flex-col items-center text-center space-y-6">
-        <div class="bg-surface-container-lowest editorial-shadow rounded-full px-8 py-4 flex flex-col md:flex-row items-center gap-6 max-w-2xl w-full">
-          <div class="w-16 h-16 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white text-xl font-bold editorial-shadow">
+        <div class="bg-surface-container-lowest editorial-shadow rounded-full px-8 py-4 flex items-center gap-6 max-w-2xl">
+          <div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold editorial-shadow">
             {{ initials }}
           </div>
-          <div class="text-left flex-1 text-center md:text-left">
+          <div class="text-left">
             <h1 class="text-2xl md:text-3xl font-extrabold text-primary tracking-tight">Selamat datang, {{ user?.username || 'Budi Santoso' }} 👋</h1>
             <p class="text-on-surface-variant font-medium text-sm">Role: {{ user?.role?.name || 'Penanggung Jawab Mata Kuliah' }}</p>
           </div>
-          <div class="bg-surface-container-high text-primary px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap mt-4 md:mt-0">
+          <div class="ml-4 bg-surface-container-high text-primary px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap">
             {{ currentDate }}
           </div>
         </div>
@@ -58,63 +56,66 @@
 
       <!-- Summary Cards -->
       <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1 -->
         <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow group hover:scale-[1.02] transition-transform cursor-pointer">
           <div class="flex justify-between items-start mb-4">
-            <div class="p-2 bg-orange-50 rounded-lg"><span class="material-symbols-outlined text-orange-600">pending_actions</span></div>
-            <span class="text-orange-600 font-bold text-sm">{{ pendingCount }}</span>
-          </div>
-          <h3 class="text-on-surface-variant font-medium text-sm">Menunggu Review</h3>
-          <div class="mt-1 flex items-baseline gap-1"><span class="text-4xl font-extrabold text-orange-600">{{ pendingCount }}</span><span class="text-orange-600/60 font-semibold text-sm">permohonan</span></div>
-        </div>
-        <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow group hover:scale-[1.02] transition-transform cursor-pointer">
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-2 bg-purple-50 rounded-lg"><span class="material-symbols-outlined text-purple-600">forum</span></div>
-            <span class="text-purple-600 font-bold text-sm">{{ negotiationCount }}</span>
-          </div>
-          <h3 class="text-on-surface-variant font-medium text-sm">Perlu Respons Nego</h3>
-          <div class="mt-1 flex items-baseline gap-1"><span class="text-4xl font-extrabold text-purple-600">{{ negotiationCount }}</span><span class="text-purple-600/60 font-semibold text-sm">menunggu</span></div>
-        </div>
-        <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow group hover:scale-[1.02] transition-transform cursor-pointer">
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-2 bg-green-50 rounded-lg"><span class="material-symbols-outlined text-green-600">check_circle</span></div>
+            <div class="p-2 bg-primary/5 rounded-lg">
+              <span class="material-symbols-outlined text-primary">calendar_month</span>
+            </div>
             <a class="text-primary font-bold text-sm group-hover:underline" href="#">Lihat →</a>
           </div>
-          <h3 class="text-on-surface-variant font-medium text-sm">Sudah Disetujui</h3>
-          <div class="mt-1 flex items-baseline gap-1"><span class="text-4xl font-extrabold text-green-600">{{ approvedCount }}</span><span class="text-green-600/60 font-semibold text-sm">booking</span></div>
+          <h3 class="text-on-surface-variant font-medium text-sm">Jadwal Hari Ini</h3>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold text-primary">{{ todaySchedulesCount }}</span>
+            <span class="text-primary/60 font-semibold text-sm">mata kuliah</span>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow group hover:scale-[1.02] transition-transform cursor-pointer">
+          <div class="flex justify-between items-start mb-4">
+            <div class="p-2 bg-green-50 rounded-lg">
+              <span class="material-symbols-outlined text-green-600">check_circle</span>
+            </div>
+            <a class="text-primary font-bold text-sm group-hover:underline" href="#">Lihat →</a>
+          </div>
+          <h3 class="text-on-surface-variant font-medium text-sm">Sudah Dipakai</h3>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold text-green-600">{{ activeSchedulesCount }}</span>
+            <span class="text-green-600/60 font-semibold text-sm">hari ini</span>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-surface-container-lowest rounded-xl p-6 border-2 border-orange-200 editorial-shadow group hover:scale-[1.02] transition-transform cursor-pointer relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-16 h-16 bg-orange-100/50 rounded-bl-full -mr-4 -mt-4"></div>
+          <div class="flex justify-between items-start mb-4 relative z-10">
+            <div class="p-2 bg-orange-50 rounded-lg">
+              <span class="material-symbols-outlined text-orange-600">warning</span>
+            </div>
+            <a class="text-orange-600 font-bold text-sm group-hover:underline" href="#">Update →</a>
+          </div>
+          <h3 class="text-on-surface-variant font-medium text-sm">Perlu Update</h3>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold text-orange-600">{{ pendingUpdatesCount }}</span>
+            <span class="text-orange-600/60 font-semibold text-sm">status pending</span>
+          </div>
         </div>
       </section>
 
-      <!-- Negosiasi Alert Banner -->
-      <section v-if="negotiationBookings.length > 0">
-        <div v-for="nb in negotiationBookings" :key="nb.id" class="mb-4 p-5 bg-purple-50 border border-purple-200 rounded-xl flex flex-col md:flex-row md:items-center gap-4">
-          <div class="bg-purple-500 text-white p-2 rounded-lg shrink-0"><span class="material-symbols-outlined">forum</span></div>
-          <div class="flex-1">
-            <p class="font-bold text-purple-800">❗ Admin Mengirim Rekomendasi Negosiasi</p>
-            <p class="text-sm text-purple-700">Ruang {{ nb.room?.name }} &middot; {{ nb.bookingDate }} &middot; {{ nb.startTime?.slice(0,5) }}-{{ nb.endTime?.slice(0,5) }}</p>
-            <p v-if="nb.adminNotes" class="text-sm italic text-slate-600 mt-1 border-l-2 border-purple-300 pl-2">"{{ nb.adminNotes }}"</p>
-          </div>
-          <div class="flex gap-2 shrink-0">
-            <button @click="respondNego(nb.id, 'accept')" :disabled="isResponding" class="px-4 py-2 bg-green-500 text-white rounded-full text-sm font-bold hover:bg-green-600 transition-all disabled:opacity-50">
-              ✅ Terima
-            </button>
-            <button @click="respondNego(nb.id, 'reject')" :disabled="isResponding" class="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-bold hover:bg-red-600 transition-all disabled:opacity-50">
-              ❌ Tolak
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- My Bookings Table -->
+      <!-- Main Table Card -->
       <section class="bg-surface-container-lowest rounded-xl editorial-shadow overflow-visible">
         <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-2xl text-primary">assignment</span>
-            <h2 class="text-xl font-extrabold text-primary tracking-tight">Riwayat Permohonan Saya</h2>
+            <span class="material-symbols-outlined text-2xl text-primary">calendar_today</span>
+            <h2 class="text-xl font-extrabold text-primary tracking-tight">Jadwal Tanggung Jawab Saya</h2>
           </div>
-          <router-link to="/peminjaman" class="bg-primary text-white px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-blue-900 transition-all">
-            <span class="material-symbols-outlined text-lg">add</span> Ajukan Baru
-          </router-link>
+          <div class="flex bg-surface-container-low p-1 rounded-full w-fit">
+            <button @click="filterType = 'today'" :class="filterType === 'today' ? 'bg-primary text-white rounded-full' : 'text-on-surface-variant hover:text-primary'" class="px-6 py-2 text-xs font-bold transition-colors cursor-pointer">Hari Ini ●</button>
+            <button @click="filterType = 'all'" :class="filterType === 'all' ? 'bg-primary text-white rounded-full' : 'text-on-surface-variant hover:text-primary'" class="px-6 py-2 text-xs font-bold transition-colors cursor-pointer">Semua</button>
+          </div>
         </div>
+
         <div class="overflow-x-auto pb-8">
           <div v-if="isLoading" class="p-12 text-center text-slate-400">
             <span class="material-symbols-outlined text-4xl animate-spin">sync</span>
@@ -122,35 +123,49 @@
           <table v-else class="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr class="text-on-surface-variant/60 font-bold text-xs uppercase tracking-widest bg-surface-container-low/50">
-                <th class="px-8 py-4">Ruang</th>
-                <th class="px-6 py-4">Tanggal &amp; Waktu</th>
-                <th class="px-6 py-4">Keperluan</th>
-                <th class="px-6 py-4">Prioritas</th>
+                <th class="px-8 py-4">Hari & Jam</th>
+                <th class="px-6 py-4">Ruang</th>
+                <th class="px-6 py-4">Mata Kuliah</th>
+                <th class="px-6 py-4">Kelas</th>
                 <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody class="text-sm">
-              <tr v-if="myBookings.length === 0">
-                <td colspan="5" class="px-8 py-12 text-center text-slate-400">Belum ada permohonan. <router-link to="/peminjaman" class="text-primary font-bold underline">Ajukan sekarang!</router-link></td>
+              <tr v-if="filteredSchedules.length === 0">
+                <td colspan="6" class="px-8 py-12 text-center text-slate-400">Tidak ada jadwal ditemukan.</td>
               </tr>
-              <tr v-else v-for="b in myBookings" :key="b.id" class="hover:bg-surface-container-low/30 transition-colors border-t border-primary/5">
-                <td class="px-8 py-5 font-bold text-primary">{{ b.room?.code || '-' }}</td>
-                <td class="px-6 py-5 text-on-surface-variant">
-                  <p class="font-bold">{{ formatDate(b.bookingDate) }}</p>
-                  <p class="text-xs text-slate-400">{{ b.startTime?.slice(0,5) }} - {{ b.endTime?.slice(0,5) }}</p>
-                </td>
-                <td class="px-6 py-5 max-w-[200px] truncate">{{ b.purpose }}</td>
+              <tr v-else v-for="s in filteredSchedules" :key="s.id" :class="['transition-colors', openDropdownId === s.id ? 'bg-primary/5 relative' : 'hover:bg-surface-container-low/30']">
+                <td class="px-8 py-5 font-bold text-primary">{{ s.dayName }}, {{ s.startTime.slice(0,5) }}-{{ s.endTime.slice(0,5) }}</td>
+                <td class="px-6 py-5 font-semibold text-on-surface-variant">{{ s.room?.name || 'Unknown' }}</td>
+                <td class="px-6 py-5 font-bold text-primary">{{ s.activity }}</td>
+                <td class="px-6 py-5 font-bold text-on-surface-variant">{{ user?.kelas || '-' }}</td>
                 <td class="px-6 py-5">
-                  <span class="inline-flex items-center gap-1 text-xs">
-                    <span v-for="i in 5" :key="i" class="material-symbols-outlined text-sm" :class="i <= b.activityWeight ? 'text-amber-400' : 'text-slate-200'" :style="i <= b.activityWeight ? `font-variation-settings: 'FILL' 1` : ''">star</span>
+                  <span :class="statusConfig[s.status]?.pillClass" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold text-[11px]">
+                    <span :class="statusConfig[s.status]?.dotClass" class="w-1.5 h-1.5 rounded-full"></span>
+                    {{ statusConfig[s.status]?.label }}
                   </span>
                 </td>
-                <td class="px-6 py-5">
-                  <span :class="statusPillClass(b.status)" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold text-[11px]">
-                    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                    {{ statusLabel(b.status) }}
-                  </span>
-                  <p v-if="b.adminNotes && b.status === 'needs_negotiation'" class="text-[10px] text-purple-600 mt-1 italic">Cek panel negosiasi di atas!</p>
+                <td class="px-6 py-5 text-right relative">
+                  <button @click="toggleDropdown(s.id)" :class="openDropdownId === s.id ? 'bg-primary text-white' : 'bg-surface-container-high hover:bg-surface-container-highest text-primary'" class="px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ml-auto transition-colors cursor-pointer">
+                    Ubah Status <span class="material-symbols-outlined text-xs">{{ openDropdownId === s.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
+                  </button>
+                  
+                  <!-- Dropdown Overlay -->
+                  <div v-if="openDropdownId === s.id" class="absolute right-6 top-full mt-2 w-48 bg-white editorial-shadow rounded-xl p-2 z-40 border border-primary/5">
+                    <button @click="updateStatus(s.id, 'aktif')" class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                      <span class="w-2 h-2 rounded-full bg-green-500"></span> ✅ Dipakai
+                    </button>
+                    <button @click="updateStatus(s.id, 'online')" class="w-full text-left px-4 py-2 hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span> 🔵 Online
+                    </button>
+                    <button @click="updateStatus(s.id, 'ditunda')" class="w-full text-left px-4 py-2 hover:bg-orange-50 text-orange-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                      <span class="w-2 h-2 rounded-full bg-orange-500"></span> 🟡 Ditunda
+                    </button>
+                    <button @click="updateStatus(s.id, 'batal')" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                      <span class="w-2 h-2 rounded-full bg-red-500"></span> 🔴 Dibatalkan
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -158,15 +173,51 @@
         </div>
       </section>
 
+      <!-- History Card -->
+      <section class="bg-surface-container-lowest rounded-xl editorial-shadow overflow-hidden">
+        <div class="p-6 md:p-8 flex items-center gap-3">
+          <span class="material-symbols-outlined text-2xl text-primary">history</span>
+          <h2 class="text-xl font-extrabold text-primary tracking-tight">Riwayat Perubahan Status</h2>
+        </div>
+        <div class="overflow-x-auto px-8 pb-4">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="text-on-surface-variant/40 font-bold text-[10px] uppercase tracking-[0.2em]">
+                <th class="py-4">Tanggal</th>
+                <th class="py-4">Ruang</th>
+                <th class="py-4">Mata Kuliah</th>
+                <th class="py-4">Perubahan</th>
+                <th class="py-4 text-right">Jam Update</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              <tr v-if="scheduleLogs.length === 0">
+                <td colspan="5" class="py-8 text-center text-slate-400">Belum ada riwayat perubahan.</td>
+              </tr>
+              <tr v-else v-for="log in scheduleLogs" :key="log.id" class="border-t border-primary/5">
+                <td class="py-5 font-semibold text-on-surface-variant">{{ formatDate(log.changedAt) }}</td>
+                <td class="py-5 font-bold text-primary">{{ log.roomName }}</td>
+                <td class="py-5 font-bold text-primary">{{ log.activity }}</td>
+                <td class="py-5 flex items-center gap-3">
+                  <span :class="statusConfig[log.oldStatus]?.pillClass" class="px-3 py-1 rounded-md font-bold text-[10px]">{{ statusConfig[log.oldStatus]?.label }}</span>
+                  <span class="material-symbols-outlined text-primary/40 text-sm">trending_flat</span>
+                  <span :class="statusConfig[log.newStatus]?.pillClass" class="px-3 py-1 rounded-md font-bold text-[10px]">{{ statusConfig[log.newStatus]?.label }}</span>
+                </td>
+                <td class="py-5 text-right font-bold text-primary/60">{{ formatTime(log.changedAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <!-- Footer -->
     <footer class="w-full py-8 mt-auto px-8 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <p class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40">© 2026 CLASSINFY UNESA. Digital Quad System.</p>
       <div class="flex items-center gap-8">
-        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100" href="#">Panduan PJ</a>
-        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100" href="#">Bantuan</a>
-        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100" href="#">Kebijakan Privasi</a>
+        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100 cursor-pointer">Panduan PJ</a>
+        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100 cursor-pointer">Bantuan</a>
+        <a class="font-['Plus_Jakarta_Sans'] text-xs font-medium text-blue-900/40 hover:text-blue-900 transition-colors opacity-80 hover:opacity-100 cursor-pointer">Kebijakan Privasi</a>
       </div>
     </footer>
   </div>
@@ -183,9 +234,19 @@ const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const user = computed(() => authStore.user)
-const myBookings = ref([])
+const schedules = ref([])
+const scheduleLogs = ref([])
 const isLoading = ref(true)
-const isResponding = ref(false)
+const openDropdownId = ref(null)
+const filterType = ref('all') // 'today' or 'all'
+
+const statusConfig = {
+  aktif: { pillClass: 'bg-green-50 text-green-600', dotClass: 'bg-green-500', label: 'Dipakai' },
+  online: { pillClass: 'bg-blue-50 text-blue-600', dotClass: 'bg-blue-500', label: 'Online' },
+  ditunda: { pillClass: 'bg-orange-50 text-orange-600', dotClass: 'bg-orange-500', label: 'Ditunda' },
+  batal: { pillClass: 'bg-red-50 text-red-600', dotClass: 'bg-red-500', label: 'Dibatalkan' },
+  terjadwal: { pillClass: 'bg-slate-100 text-slate-500', dotClass: 'bg-slate-400', label: 'Terjadwal' }
+}
 
 const initials = computed(() => {
   if (!user.value || !user.value.username) return 'BS';
@@ -196,60 +257,57 @@ const currentDate = computed(() => {
   return new Intl.DateTimeFormat('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
 })
 
-// Computed stats
-const negotiationBookings = computed(() => myBookings.value.filter(b => b.status === 'needs_negotiation'))
-const pendingCount = computed(() => myBookings.value.filter(b => b.status === 'pending').length)
-const negotiationCount = computed(() => negotiationBookings.value.length)
-const approvedCount = computed(() => myBookings.value.filter(b => b.status === 'approved').length)
+const currentDayNum = new Date().getDay()
 
-const fetchMyBookings = async () => {
+const filteredSchedules = computed(() => {
+  if (filterType.value === 'today') {
+    return schedules.value.filter(s => s.dayOfWeek === currentDayNum)
+  }
+  return schedules.value
+})
+
+const todaySchedulesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum).length)
+const activeSchedulesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum && s.status === 'aktif').length)
+const pendingUpdatesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum && (s.status === 'aktif' /* or terjadwal but default is aktif in DB */)).length)
+
+const fetchMySchedules = async () => {
   isLoading.value = true
   try {
-    const res = await axios.get(`${API_URL}/api/bookings/me`, { headers: authStore.getAuthHeaders() })
-    myBookings.value = res.data.data || []
+    const res = await axios.get(`${API_URL}/api/schedules/me`, { headers: authStore.getAuthHeaders() })
+    schedules.value = res.data.data || []
+    
+    // Fetch logs for these schedules
+    let allLogs = []
+    for (const s of schedules.value) {
+      try {
+        const logRes = await axios.get(`${API_URL}/api/schedules/${s.id}/logs`, { headers: authStore.getAuthHeaders() })
+        const logs = logRes.data.data.map(l => ({...l, roomName: s.room?.name, activity: s.activity}))
+        allLogs = [...allLogs, ...logs]
+      } catch(e) {}
+    }
+    // Sort logs by date desc
+    scheduleLogs.value = allLogs.sort((a,b) => new Date(b.changedAt) - new Date(a.changedAt))
+    
   } catch (err) {
-    console.error('Failed fetching bookings', err)
+    console.error('Failed fetching schedules', err)
   } finally {
     isLoading.value = false
   }
 }
 
-// Sprint 4: Mahasiswa respond negosiasi
-const respondNego = async (bookingId, response) => {
-  const label = response === 'accept' ? 'MENERIMA' : 'MENOLAK'
-  if (!confirm(`Apakah Anda yakin ingin ${label} rekomendasi negosiasi dari admin?`)) return
+const toggleDropdown = (id) => {
+  if (openDropdownId.value === id) openDropdownId.value = null
+  else openDropdownId.value = id
+}
 
-  isResponding.value = true
+const updateStatus = async (id, status) => {
   try {
-    const res = await axios.patch(`${API_URL}/api/bookings/${bookingId}/respond-negotiation`,
-      { response },
-      { headers: authStore.getAuthHeaders() }
-    )
-    alert(res.data.message)
-    await fetchMyBookings()
-  } catch (err) {
-    alert(err.response?.data?.message || 'Gagal merespons negosiasi')
-  } finally {
-    isResponding.value = false
+    await axios.patch(`${API_URL}/api/schedules/${id}/status`, { status }, { headers: authStore.getAuthHeaders() })
+    openDropdownId.value = null
+    await fetchMySchedules()
+  } catch(err) {
+    alert(err.response?.data?.message || 'Gagal mengubah status')
   }
-}
-
-const formatDate = (d) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-const statusLabel = (status) => {
-  const map = { pending: 'Pending', approved: 'Disetujui', rejected: 'Ditolak', cancelled: 'Dibatalkan', needs_negotiation: 'Perlu Respons', rescheduled: 'Rescheduled' }
-  return map[status] || status
-}
-
-const statusPillClass = (status) => {
-  if (status === 'approved') return 'bg-green-50 text-green-600'
-  if (status === 'rejected' || status === 'cancelled') return 'bg-slate-100 text-slate-500'
-  if (status === 'needs_negotiation') return 'bg-purple-50 text-purple-700'
-  if (status === 'rescheduled') return 'bg-sky-50 text-sky-700'
-  return 'bg-amber-50 text-amber-700'
 }
 
 const handleLogout = () => {
@@ -259,8 +317,18 @@ const handleLogout = () => {
   }
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(dateString))
+}
+
+const formatTime = (dateString) => {
+  if (!dateString) return '-'
+  return new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(new Date(dateString))
+}
+
 onMounted(() => {
-  fetchMyBookings()
+  fetchMySchedules()
 })
 </script>
 

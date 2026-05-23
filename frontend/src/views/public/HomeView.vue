@@ -57,7 +57,7 @@ const statusConfig = {
 }
 
 const todayDay = new Date().getDay()
-const initialDay = todayDay === 0 ? '1' : todayDay.toString()
+const initialDay = todayDay.toString()
 const selectedDay = ref(initialDay) // specific day number
 const dayOptions = [
   { label: 'Senin', value: '1' },
@@ -66,6 +66,7 @@ const dayOptions = [
   { label: 'Kamis', value: '4' },
   { label: 'Jumat', value: '5' },
   { label: 'Sabtu', value: '6' },
+  { label: 'Minggu', value: '0' },
 ]
 
 const filteredRooms = computed(() => {

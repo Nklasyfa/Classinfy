@@ -41,6 +41,32 @@ ScheduleLog.belongsTo(Schedule, { foreignKey: 'scheduleId', as: 'schedule' });
 User.hasMany(ScheduleLog, { foreignKey: 'userId', as: 'scheduleLogs' });
 ScheduleLog.belongsTo(User, { foreignKey: 'userId', as: 'changedBy' });
 
+const Prodi = require('./definitions/Prodi');
+const Matkul = require('./definitions/Matkul');
+const Kelas = require('./definitions/Kelas');
+
+// Stage 6: Prodi <-> Matkul
+Prodi.hasMany(Matkul, { foreignKey: 'prodiId', as: 'matkuls' });
+Matkul.belongsTo(Prodi, { foreignKey: 'prodiId', as: 'prodi' });
+
+// Stage 6: Prodi <-> Kelas
+Prodi.hasMany(Kelas, { foreignKey: 'prodiId', as: 'kelas' });
+Kelas.belongsTo(Prodi, { foreignKey: 'prodiId', as: 'prodi' });
+
+// Stage 6: User <-> Prodi, Matkul, Kelas
+Prodi.hasMany(User, { foreignKey: 'prodiId', as: 'users' });
+User.belongsTo(Prodi, { foreignKey: 'prodiId', as: 'prodi' });
+
+Matkul.hasMany(User, { foreignKey: 'matkulId', as: 'users' });
+User.belongsTo(Matkul, { foreignKey: 'matkulId', as: 'matkul' });
+
+Kelas.hasMany(User, { foreignKey: 'kelasId', as: 'users' });
+User.belongsTo(Kelas, { foreignKey: 'kelasId', as: 'kelas' });
+
+// Stage 6: User (PJ) <-> Schedule
+User.hasMany(Schedule, { foreignKey: 'pjId', as: 'managedSchedules' });
+Schedule.belongsTo(User, { foreignKey: 'pjId', as: 'pj' });
+
 // ==================== Seed Functions ====================
 
 const seedRoles = async () => {
@@ -70,5 +96,8 @@ module.exports = {
   Booking,
   ScheduleLog,
   BookingLog,
+  Prodi,
+  Matkul,
+  Kelas,
   seedRoles,
 };

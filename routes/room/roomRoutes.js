@@ -5,8 +5,8 @@ const verifyToken = require('../../middlewares/auth/verifyToken');
 const isAdmin = require('../../middlewares/auth/isAdmin');
 
 // Routes untuk Ruangan
-router.get('/rooms', verifyToken, roomController.getAllRooms);
-router.get('/rooms/:id', verifyToken, roomController.getRoomById);
+router.get('/rooms', roomController.getAllRooms);
+router.get('/rooms/:id', roomController.getRoomById);
 router.post('/rooms', verifyToken, isAdmin, roomController.createRoom);
 router.put('/rooms/:id', verifyToken, isAdmin, roomController.updateRoom);
 router.delete('/rooms/:id', verifyToken, isAdmin, roomController.deleteRoom);

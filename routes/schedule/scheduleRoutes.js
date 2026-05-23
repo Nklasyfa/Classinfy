@@ -6,6 +6,7 @@ const isAdmin = require('../../middlewares/auth/isAdmin');
 const isPJ = require('../../middlewares/auth/isPJ');
 
 // Routes untuk Jadwal Tetap
+router.get('/schedules/me', verifyToken, isPJ, scheduleController.getMySchedules);
 router.get('/schedules/:roomId', verifyToken, scheduleController.getSchedulesByRoom);
 router.post('/schedules', verifyToken, isAdmin, scheduleController.createSchedule);
 

@@ -5,7 +5,7 @@ const { User, Role } = require('../../models');
 // ==================== REGISTER ====================
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, roleId } = req.body;
+    const { username, email, password, roleId, prodiId, matkulId, kelasId } = req.body;
 
     // Validasi input
     if (!username || !email || !password) {
@@ -24,6 +24,9 @@ exports.register = async (req, res) => {
       email,
       password,
       roleId: roleId || 2, // Default: Mahasiswa
+      prodiId: prodiId || null,
+      matkulId: matkulId || null,
+      kelasId: kelasId || null,
       isVerified: (roleId == 2 || !roleId) ? true : false, // Hanya Mahasiswa yang auto-verified
     });
 

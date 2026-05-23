@@ -25,6 +25,7 @@ app.use('/api', scheduleRoutes);
 app.use('/api', bookingRoutes);
 app.use('/api', monitoringRoutes); // Public - tanpa auth
 app.use('/api', require('./routes/user/userRoutes'));
+app.use('/api', require('./routes/akademik/akademikRoutes'));
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -130,6 +131,25 @@ app.listen(PORT, async () => {
       `);
       await sequelize.query(
         'ALTER TABLE "Schedules" ADD COLUMN IF NOT EXISTS "status" "enum_Schedules_status" DEFAULT \'aktif\''
+      );
+      await sequelize.query(
+        'ALTER TABLE "Schedules" ADD COLUMN IF NOT EXISTS "pjId" UUID REFERENCES "Users"("id") ON UPDATE CASCADE ON DELETE SET NULL'
+      );
+
+      // Users table additions
+      await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "prodiId" INTEGER REFERENCES "Prodis"("id") ON UPDATE CASCADE ON DELETE SET NULL'
+      );
+      await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "matkulId" INTEGER REFERENCES "Matkuls"("id") ON UPDATE CASCADE ON DELETE SET NULL'
+      );
+      
+      const { Kelas } = require('./models');
+      await Kelas.sync({ alter: true });
+      
+      await sequelize.query('ALTER TABLE "Users" DROP COLUMN IF EXISTS "kelas" CASCADE');
+      await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "kelasId" INTEGER REFERENCES "Kelas"("id") ON UPDATE CASCADE ON DELETE SET NULL'
       );
 
       // ScheduleLogs table

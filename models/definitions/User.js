@@ -35,6 +35,18 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  prodiId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  matkulId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  kelasId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
 }, {
   tableName: 'Users',
   timestamps: true,
