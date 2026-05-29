@@ -52,8 +52,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Jalankan Server & Koneksi Database
-app.listen(PORT, async () => {
+// Export untuk Vercel Serverless Function
+module.exports = app;
+
+// Jalankan Server & Koneksi Database (Hanya jika jalan di lokal / bukan Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
   await testConnection();
 
@@ -219,3 +223,4 @@ app.listen(PORT, async () => {
     console.error('❌ Gagal sinkronisasi database:', error.message);
   }
 });
+}
