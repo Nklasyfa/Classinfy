@@ -98,9 +98,52 @@
             </div>
           </div>
         </div>
-        <button @click="showModal = true" type="button" class="bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold px-6 py-3 rounded-[12px] transition-all flex items-center gap-2 text-sm active:scale-95 shrink-0 cursor-pointer w-full md:w-auto justify-center">
+        
+        <!-- VISUAL KALENDER RUANGAN HARI INI -->
+        <div class="mt-6 border-t border-slate-100 pt-6 w-full">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px] text-primary">calendar_month</span>
+              Ketersediaan Ruang ({{ formatDateIndo(form.bookingDate) }})
+            </h3>
+            <div class="flex gap-2">
+              <span class="flex items-center gap-1 text-[10px] font-bold text-slate-500"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Kosong</span>
+              <span class="flex items-center gap-1 text-[10px] font-bold text-slate-500"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Terjadwal</span>
+              <span class="flex items-center gap-1 text-[10px] font-bold text-slate-500"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Booking</span>
+            </div>
+          </div>
+          
+          <div v-if="isLoadingSchedule" class="h-16 bg-slate-50 rounded-xl flex items-center justify-center animate-pulse">
+            <span class="text-xs font-bold text-slate-400">Memuat jadwal...</span>
+          </div>
+          <div v-else-if="roomScheduleToday" class="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+            <div v-for="(slot, idx) in roomScheduleToday.slots" :key="idx" 
+                 class="min-w-[100px] flex-1 rounded-xl p-2 border flex flex-col justify-center items-center text-center transition-colors"
+                 :class="[
+                   slot.status === 'kosong' ? 'bg-slate-50 border-slate-200 border-dashed hover:bg-slate-100' :
+                   slot.status === 'terjadwal' ? 'bg-slate-100 border-slate-200' :
+                   slot.status === 'pending' ? 'bg-amber-50 border-amber-200' :
+                   'bg-red-50 border-red-200'
+                 ]">
+              <span class="text-[9px] font-black text-slate-400 mb-1 uppercase">{{ timeSlots[idx] }}</span>
+              <span v-if="slot.status === 'kosong'" class="text-[10px] font-bold text-slate-400">KOSONG</span>
+              <div v-else class="flex flex-col items-center w-full">
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-1"
+                      :class="slot.status === 'terjadwal' ? 'bg-slate-200 text-slate-600' : (slot.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')">
+                  {{ slot.status.toUpperCase() }}
+                </span>
+                <span class="text-[9px] font-bold text-slate-700 truncate w-full px-1" :title="slot.title">{{ slot.title }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="h-16 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center">
+            <span class="text-xs font-bold text-slate-400">Jadwal tidak tersedia</span>
+          </div>
+        </div>
+
+        <button @click="showModal = true" type="button" class="mt-6 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold px-6 py-3 rounded-[12px] transition-all flex items-center gap-2 text-sm active:scale-95 shrink-0 cursor-pointer w-full justify-center">
           <span class="material-symbols-outlined text-lg">sync</span>
-          Ganti Ruang
+          Ganti Ruang atau Tanggal
         </button>
       </section>
 
@@ -368,6 +411,14 @@ const conflictsList = ref([])
 const isChecking = ref(false)
 const isSubmitting = ref(false)
 
+// Jadwal Visual State
+const isLoadingSchedule = ref(false)
+const roomScheduleToday = ref(null)
+const timeSlots = [
+  '07.00 - 08.40', '08.40 - 10.20', '10.20 - 12.00', '12.00 - 13.40', 
+  '13.40 - 15.20', '15.20 - 17.00', '17.00 - 18.40'
+]
+
 const user = computed(() => authStore.user)
 const initials = computed(() => {
   if (!user.value || !user.value.username) return 'U';
@@ -434,6 +485,29 @@ const fetchRooms = async () => {
     }
     // Trigger conflict check setelah room pertama di-set
     checkConflict()
+    fetchRoomSchedule()
+  }
+}
+
+// Fetch Room Schedule for Visual Calendar
+const fetchRoomSchedule = async () => {
+  if (!form.value.roomId || !form.value.bookingDate) return
+  isLoadingSchedule.value = true
+  try {
+    const res = await axios.get(`${API_URL}/api/monitoring`, {
+      params: { date: form.value.bookingDate }
+    })
+    const data = res.data.data
+    const roomMonitoring = data.find(r => String(r.id) === String(form.value.roomId))
+    if (roomMonitoring) {
+      roomScheduleToday.value = roomMonitoring
+    } else {
+      roomScheduleToday.value = null
+    }
+  } catch (error) {
+    console.error('Error fetching room schedule', error)
+  } finally {
+    isLoadingSchedule.value = false
   }
 }
 
@@ -469,7 +543,16 @@ const checkConflict = async () => {
   }
 }
 
-watch(() => [form.value.roomId, form.value.bookingDate, form.value.startTime, form.value.endTime], () => {
+// Watchers
+watch([() => form.value.roomId, () => form.value.bookingDate, () => form.value.startTime, () => form.value.endTime], () => {
+  checkConflict()
+})
+
+watch([() => form.value.roomId, () => form.value.bookingDate], () => {
+  fetchRoomSchedule()
+})
+
+watch(() => [form.value.startTime, form.value.endTime], () => {
   if(form.value.startTime && form.value.endTime && form.value.startTime >= form.value.endTime) {
     form.value.endTime = `${String(Number(form.value.startTime.split(':')[0]) + 1).padStart(2,'0')}:00`
   }
