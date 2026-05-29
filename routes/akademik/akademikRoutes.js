@@ -24,4 +24,9 @@ router.post('/kelas', authMiddleware, adminMiddleware, akademikController.create
 router.put('/kelas/:id', authMiddleware, adminMiddleware, akademikController.updateKelas);
 router.delete('/kelas/:id', authMiddleware, adminMiddleware, akademikController.deleteKelas);
 
+// Bulk endpoints
+router.post('/prodis/bulk', authMiddleware, adminMiddleware, akademikController.bulkCreateProdi);
+router.post('/matkuls/bulk', authMiddleware, adminMiddleware, akademikController.bulkCreateMatkul);
+router.post('/kelas/bulk', authMiddleware, adminMiddleware, akademikController.bulkCreateKelas);
+
 module.exports = router;

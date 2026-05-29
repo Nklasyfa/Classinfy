@@ -106,10 +106,85 @@ async function handleDelete(type, id) {
   } catch(e) { alert('Gagal menghapus data') }
 }
 
+import * as XLSX from 'xlsx'
+
 const modalTitle = computed(() => {
   const names = { prodi: 'Program Studi', matkul: 'Mata Kuliah', kelas: 'Kelas' }
   return `${modal.value.isEdit ? 'Edit' : 'Tambah'} ${names[modal.value.type] || ''}`
 })
+
+// --- Bulk Import ---
+const fileInput = ref(null)
+const isImporting = ref(false)
+
+function triggerImport() {
+  if (fileInput.value) fileInput.value.click()
+}
+
+async function handleFileUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  
+  isImporting.value = true
+  try {
+    const data = await file.arrayBuffer()
+    const workbook = XLSX.read(data)
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+    const rows = XLSX.utils.sheet_to_json(worksheet)
+    
+    if (!rows || rows.length === 0) {
+      alert('File kosong atau format salah!')
+      return
+    }
+
+    // Pemetaan data menyesuaikan format masing-masing tab
+    let payload = []
+    if (activeTab.value === 'prodi') {
+      payload = rows.map(r => ({ code: r.Kode || r.code, name: r.Nama || r.name }))
+    } else if (activeTab.value === 'matkul') {
+      payload = rows.map(r => {
+        const p = prodis.value.find(pr => pr.code === (r.Prodi || r.prodiCode))
+        return { code: r.Kode || r.code, name: r.Nama || r.name, prodiId: p ? p.id : null }
+      })
+    } else if (activeTab.value === 'kelas') {
+      payload = rows.map(r => {
+        const p = prodis.value.find(pr => pr.code === (r.Prodi || r.prodiCode))
+        return { code: r.Kode || r.code, name: r.Nama || r.name, prodiId: p ? p.id : null }
+      })
+    }
+    
+    // Filter out rows with null prodiId if matkul/kelas
+    if (activeTab.value !== 'prodi') {
+      const invalid = payload.filter(p => !p.prodiId)
+      if (invalid.length > 0) {
+        alert(`${invalid.length} baris gagal diproses karena Kode Prodi tidak ditemukan di database. Pastikan kolom "Prodi" atau "prodiCode" pada Excel valid.`)
+        payload = payload.filter(p => p.prodiId)
+      }
+    }
+
+    if (payload.length === 0) {
+      alert('Tidak ada data valid untuk diimport.')
+      return
+    }
+
+    const endpoints = { prodi: 'prodis', matkul: 'matkuls', kelas: 'kelas' }
+    const ep = endpoints[activeTab.value]
+    
+    const res = await axios.post(`${API_URL}/api/${ep}/bulk`, { data: payload }, { headers: authStore.getAuthHeaders() })
+    alert(res.data.message || 'Import berhasil!')
+    
+    if (activeTab.value === 'prodi') fetchProdis()
+    if (activeTab.value === 'matkul') fetchMatkuls()
+    if (activeTab.value === 'kelas') fetchKelas()
+    
+  } catch(error) {
+    console.error(error)
+    alert('Terjadi kesalahan saat import data.')
+  } finally {
+    isImporting.value = false
+    e.target.value = null // reset input
+  }
+}
 </script>
 
 <template>
@@ -186,9 +261,22 @@ const modalTitle = computed(() => {
                 class="w-full pl-9 pr-4 py-2.5 bg-surface-container-low/60 border border-outline-variant/20 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="Cari kelas..." />
             </div>
+            
+            <input type="file" ref="fileInput" @change="handleFileUpload" accept=".xlsx, .xls, .csv" class="hidden" />
+            
+            <button
+              @click="triggerImport"
+              :disabled="isImporting"
+              class="flex items-center justify-center gap-2 bg-white border border-green-500 text-green-600 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-green-50 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <span v-if="isImporting" class="animate-spin material-symbols-outlined text-[18px]">sync</span>
+              <span v-else class="material-symbols-outlined text-[18px]">upload_file</span>
+              Import Excel
+            </button>
+            
             <button
               @click="openModal(activeTab)"
-              class="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md shadow-primary/20 whitespace-nowrap"
+              class="flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-md shadow-primary/20 whitespace-nowrap"
             >
               <span class="material-symbols-outlined text-[18px]">add</span>
               Tambah {{ tabs.find(t=>t.key===activeTab)?.label }}

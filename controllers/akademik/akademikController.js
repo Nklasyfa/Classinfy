@@ -99,3 +99,32 @@ exports.deleteKelas = async (req, res) => {
     res.json({ message: 'Success' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 }
+
+exports.bulkCreateProdi = async (req, res) => {
+  try {
+    const data = req.body.data; // array of { code, name }
+    if (!data || !data.length) return res.status(400).json({ message: 'Data empty' });
+    const inserted = await Prodi.bulkCreate(data, { ignoreDuplicates: true });
+    res.status(201).json({ message: `Successfully imported ${inserted.length} Prodi` });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+}
+
+exports.bulkCreateMatkul = async (req, res) => {
+  try {
+    const data = req.body.data; // array of { code, name, prodiId }
+    if (!data || !data.length) return res.status(400).json({ message: 'Data empty' });
+    const { Matkul } = require('../../models');
+    const inserted = await Matkul.bulkCreate(data, { ignoreDuplicates: true });
+    res.status(201).json({ message: `Successfully imported ${inserted.length} Matkul` });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+}
+
+exports.bulkCreateKelas = async (req, res) => {
+  try {
+    const data = req.body.data; // array of { code, name, prodiId }
+    if (!data || !data.length) return res.status(400).json({ message: 'Data empty' });
+    const { Kelas } = require('../../models');
+    const inserted = await Kelas.bulkCreate(data, { ignoreDuplicates: true });
+    res.status(201).json({ message: `Successfully imported ${inserted.length} Kelas` });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+}
