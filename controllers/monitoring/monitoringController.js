@@ -18,11 +18,13 @@ exports.getMonitoringData = async (req, res) => {
       dateString = date;
     } else {
       const today = new Date();
-      targetDate = today;
-      dayOfWeek = today.getDay();
-      const offset = today.getTimezoneOffset();
-      const localToday = new Date(today.getTime() - (offset * 60 * 1000));
-      dateString = localToday.toISOString().split('T')[0];
+      const wibOptions = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+      dateString = today.toLocaleDateString('en-CA', wibOptions); // format YYYY-MM-DD
+      
+      // Hitung hari dari string YYYY-MM-DD (biar aman pakai Date.UTC)
+      const [y, m, d] = dateString.split('-').map(Number);
+      targetDate = new Date(Date.UTC(y, m - 1, d));
+      dayOfWeek = targetDate.getUTCDay();
     }
 
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -116,14 +118,19 @@ exports.getMonitoringData = async (req, res) => {
           let computedStatus = scheduleStatusMap[matchedSchedule.status] || 'terjadwal';
 
           // Fitur Time: Jika hari ini dan waktu sekarang berada di dalam range jadwal, ubah status jadi 'dipakai'
+          // Gunakan timezone Asia/Jakarta agar akurat di server Vercel (yang defaultnya UTC)
           const today = new Date();
-          const todayStr = today.toISOString().split('T')[0];
+          
+          // Format ke string waktu lokal (HH:mm:ss) di zona waktu WIB
+          const wibTimeOptions = { timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+          const currentTime = today.toLocaleTimeString('en-GB', wibTimeOptions);
+          
+          // Format ke string tanggal lokal (YYYY-MM-DD) di zona waktu WIB
+          const wibDateOptions = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+          // toLocaleDateString('en-CA') outputnya YYYY-MM-DD
+          const todayStr = today.toLocaleDateString('en-CA', wibDateOptions);
           
           if (dateString === todayStr && matchedSchedule.status === 'aktif') {
-            const currentHour = today.getHours().toString().padStart(2, '0');
-            const currentMinute = today.getMinutes().toString().padStart(2, '0');
-            const currentTime = `${currentHour}:${currentMinute}:00`;
-            
             if (currentTime >= matchedSchedule.startTime && currentTime <= matchedSchedule.endTime) {
               computedStatus = 'dipakai';
             }
