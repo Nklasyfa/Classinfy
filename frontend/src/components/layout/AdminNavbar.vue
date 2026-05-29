@@ -7,7 +7,6 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const navLinks = [
-  { name: 'Monitoring', path: '/' },
   { name: 'Dashboard', path: '/admin/dashboard' },
   { name: 'Fasilitas', path: '/admin/fasilitas' },
   { name: 'Akademik', path: '/admin/akademik' },
@@ -54,9 +53,8 @@ const logout = () => {
           <p class="text-xs font-medium text-slate-400">{{ authStore.user?.username || 'Administrator' }}</p>
         </div>
         <div class="relative group">
-          <button @click="logout" class="w-10 h-10 rounded-full bg-[#001B3F] text-white flex items-center justify-center font-bold text-lg hover:scale-105 transition-transform overflow-hidden border-2 border-white shadow-md">
+          <button @click="logout" class="w-10 h-10 rounded-full bg-[#001B3F] text-white flex items-center justify-center font-bold text-lg hover:scale-105 transition-transform overflow-hidden border-2 border-white shadow-md cursor-pointer">
             {{ authStore.user?.username?.charAt(0).toUpperCase() || 'A' }}
-            <!-- Hover Overlay -->
             <div class="absolute inset-0 bg-red-600 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               <span class="material-symbols-outlined text-xl">logout</span>
             </div>
@@ -68,7 +66,6 @@ const logout = () => {
 </template>
 
 <style scoped>
-/* Optional: Smooth transition for active state */
 .router-link-active {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

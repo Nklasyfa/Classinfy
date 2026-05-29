@@ -4,16 +4,16 @@
     <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
 
     <!-- TopNavBar -->
-    <header class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] h-[64px] px-6 flex items-center justify-between z-50 bg-white/80 backdrop-blur-md rounded-full mt-4 shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-slate-100">
+    <header class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] h-[64px] px-6 flex items-center justify-between z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-full mt-6 shadow-xl no-border">
       <div class="flex items-center gap-6">
-        <span class="text-2xl font-extrabold text-primary-container tracking-tighter flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>
-          CLASSINFY
+        <span class="text-2xl font-black text-primary dark:text-white tracking-tighter font-headline flex items-center gap-2">
+          <span class="material-symbols-outlined fill-icon text-3xl">school</span>
+          CLASSIFY
         </span>
         <div class="hidden md:flex items-center gap-2 text-sm font-medium text-slate-500">
-          <router-link to="/" class="text-primary-container px-3 py-1.5 hover:scale-105 transition-transform duration-200 cursor-pointer">Monitoring</router-link>
-          <span class="material-symbols-outlined text-xs text-primary-container/50">chevron_right</span>
-          <span class="bg-primary-container text-white rounded-full px-4 py-1.5 font-bold">Ajukan Peminjaman</span>
+          <router-link to="/" class="hover:text-primary transition-colors cursor-pointer">Monitoring</router-link>
+          <span class="material-symbols-outlined text-xs">chevron_right</span>
+          <span class="text-primary font-bold">Ajukan Peminjaman</span>
         </div>
       </div>
       <div class="flex items-center gap-4">
@@ -178,7 +178,7 @@
                   <span class="w-2 h-2 rounded-full bg-yellow-500"></span><span class="text-sm font-semibold">Priority 3: Kegiatan Utama Mahasiswa (Seminar/Lomba)</span>
                 </div>
                 <div @click="submitPriority(2)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===2}">
-                  <span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm font-semibold">Priority 2: Kegiatan Organisasi</span>
+                  <span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm font-semibold">Kegiatan Organisasi</span>
                 </div>
                 <div @click="submitPriority(1)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===1}">
                   <span class="w-2 h-2 rounded-full bg-blue-400"></span><span class="text-sm font-semibold">Priority 1: Kegiatan Lainnya (Reguler)</span>
@@ -327,229 +327,3 @@
     </footer>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
-import { useAuthStore } from '../../stores/auth'
-
-const router = useRouter()
-const authStore = useAuthStore()
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
-// Data
-const rooms = ref([])
-const showDropdown = ref(false)
-const showModal = ref(false)
-const participantCount = ref(40)
-const whatsappNumber = ref('')
-const uploadedFile = ref(null)
-
-// Init Form
-const dt = new Date()
-dt.setDate(dt.getDate() + 1)
-
-const form = ref({
-  roomId: '',
-  bookingDate: dt.toISOString().split('T')[0],
-  startTime: '08:00',
-  endTime: '10:00',
-  eventName: '',
-  purpose: '',
-  jurusan: '',
-  activityWeight: 2
-})
-
-// Validation State
-const hasConflict = ref(false)
-const conflictSubtitle = ref('')
-const conflictsList = ref([])
-const isChecking = ref(false)
-const isSubmitting = ref(false)
-
-const user = computed(() => authStore.user)
-const initials = computed(() => {
-  if (!user.value || !user.value.username) return 'U';
-  return user.value.username.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-})
-
-const selectedRoomData = computed(() => rooms.value.find(r => String(r.id) === String(form.value.roomId)))
-
-// Format Date Indo
-const formatDateIndo = (dateStr) => {
-  if (!dateStr) return ''
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-  const d = new Date(dateStr)
-  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-}
-
-const getPriorityLabel = (weight) => {
-  switch(weight) {
-    case 5: return "Priority 5: Tingkat Eksekutif/Rektorat";
-    case 4: return "Priority 4: Kemahasiswaan & BEM Fakultas";
-    case 3: return "Priority 3: Kegiatan Utama Mahasiswa (Seminar/Lomba)";
-    case 2: return "Priority 2: Kegiatan Organisasi";
-    case 1: return "Priority 1: Kegiatan Lainnya (Reguler)";
-    default: return "Pilih Prioritas";
-  }
-}
-const getPriorityColor = (weight) => {
-  switch(weight) {
-    case 5: return "bg-red-600";
-    case 4: return "bg-orange-500";
-    case 3: return "bg-amber-500";
-    case 2: return "bg-red-500";
-    case 1: return "bg-blue-400";
-    default: return "bg-slate-300";
-  }
-}
-
-const toggleDropdown = () => { showDropdown.value = !showDropdown.value }
-const submitPriority = (weight) => {
-  form.value.activityWeight = weight
-  showDropdown.value = false
-}
-
-const onFileChange = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    uploadedFile.value = file
-  }
-}
-
-// Fetch Master Ruangan
-const fetchRooms = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/api/rooms`, { headers: authStore.getAuthHeaders() })
-    if (res.data.data) {
-      rooms.value = res.data.data
-    }
-  } catch (err) {
-    console.error('Failed fetching rooms', err)
-  } finally {
-    if (rooms.value.length > 0 && !form.value.roomId) {
-      form.value.roomId = rooms.value[0].id
-    }
-    // Trigger conflict check setelah room pertama di-set
-    checkConflict()
-  }
-}
-
-// Check Conflict with API
-const checkConflict = async () => {
-  if (!form.value.roomId || !form.value.bookingDate || !form.value.startTime || !form.value.endTime) return
-  isChecking.value = true
-  hasConflict.value = false
-  conflictsList.value = []
-  
-  try {
-    const res = await axios.post(`${API_URL}/api/bookings/check-conflict`, {
-      roomId: form.value.roomId,
-      bookingDate: form.value.bookingDate,
-      startTime: form.value.startTime,
-      endTime: form.value.endTime
-    }, { headers: authStore.getAuthHeaders() })
-    
-    if (res.data.status === 'conflict') {
-      hasConflict.value = true
-      conflictSubtitle.value = res.data.message || 'Slot yang diajukan bertabrakan dengan jadwal.'
-      conflictsList.value = res.data.conflicts || []
-    }
-  } catch (err) {
-    console.warn('Conflict checker error:', err)
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      alert('Sesi Anda telah kedaluwarsa. Silakan login kembali.');
-      authStore.logout();
-      router.push('/auth/login');
-    }
-  } finally {
-    isChecking.value = false
-  }
-}
-
-watch(() => [form.value.roomId, form.value.bookingDate, form.value.startTime, form.value.endTime], () => {
-  if(form.value.startTime && form.value.endTime && form.value.startTime >= form.value.endTime) {
-    form.value.endTime = `${String(Number(form.value.startTime.split(':')[0]) + 1).padStart(2,'0')}:00`
-  }
-  checkConflict()
-}, { immediate: true })
-
-const handleSubmit = async () => {
-  if (!form.value.eventName.trim()) {
-    return alert('Nama kegiatan harus diisi.')
-  }
-  if (!form.value.purpose.trim()) {
-    return alert('Tujuan penggunaan harus diisi.')
-  }
-  if (!form.value.jurusan) {
-    return alert('Jurusan/Prodi harus dipilih.')
-  }
-  if (!whatsappNumber.value.trim()) {
-    return alert('Nomor kontak WhatsApp harus diisi.')
-  }
-  isSubmitting.value = true
-  
-  try {
-    const purposeString = `${form.value.eventName} | Jurusan: ${form.value.jurusan} | Peserta: ${participantCount.value} orang | WA: +62${whatsappNumber.value} | Alasan: ${form.value.purpose}`
-    const payload = {
-      ...form.value,
-      purpose: purposeString
-    }
-    await axios.post(`${API_URL}/api/bookings`, payload, { headers: authStore.getAuthHeaders() })
-    alert('Permohonan berhasil diajukan! Anda dapat memantau status pada Dashboard Anda.')
-    router.push('/dashboard')
-  } catch (err) {
-    if (err.response?.status === 409) {
-      alert(`Gagal! ${err.response.data.message}`)
-    } else {
-      alert(err.response?.data?.message || 'Gagal mengajukan permohonan.')
-    }
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-const unreadCount = ref(2)
-
-const handleLogout = () => {
-  if (confirm('Apakah Anda yakin ingin keluar?')) {
-    authStore.logout()
-    router.push('/auth/login')
-  }
-}
-
-onMounted(() => {
-  fetchRooms()
-})
-</script>
-
-<style scoped>
-.bg-grid {
-  background-image: 
-    linear-gradient(to right, rgba(200, 213, 232, 0.4) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(200, 213, 232, 0.4) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-.fill-icon {
-  font-variation-settings: 'FILL' 1;
-}
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out forwards;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-</style>

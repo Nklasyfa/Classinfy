@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth'
 
 // Public
 import HomeView from '../views/public/HomeView.vue'
+import TeamView from '../views/public/TeamView.vue'
 
 // Auth
 import AuthView from '../views/auth/AuthView.vue'
@@ -10,6 +11,8 @@ import AuthView from '../views/auth/AuthView.vue'
 // User
 import DashboardPjView from '../views/user/DashboardPjView.vue'
 import AjukanPeminjamanView from '../views/user/AjukanPeminjamanView.vue'
+import NotifikasiView from '../views/user/NotifikasiView.vue'
+import ChatView from '../views/user/ChatView.vue'
 
 // Admin
 import DashboardAdminView from '../views/admin/DashboardAdminView.vue'
@@ -23,6 +26,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/team',
+      name: 'team',
+      component: TeamView,
       meta: { requiresAuth: false },
     },
     {
@@ -47,6 +56,18 @@ const router = createRouter({
       path: '/peminjaman',
       name: 'peminjaman',
       component: AjukanPeminjamanView,
+      meta: { requiresAuth: true, roles: [1, 2, 3, 4] },
+    },
+    {
+      path: '/notifikasi',
+      name: 'notifikasi',
+      component: NotifikasiView,
+      meta: { requiresAuth: true, roles: [1, 2, 3, 4] },
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: ChatView,
       meta: { requiresAuth: true, roles: [1, 2, 3, 4] },
     },
     {

@@ -39,8 +39,9 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
     });
   }
 
-  const requestDate = new Date(bookingDate);
-  const dayOfWeek = requestDate.getDay();
+  const [year, month, day] = bookingDate.split('-').map(Number);
+  const requestDate = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = requestDate.getUTCDay();
   const scheduleConflicts = await Schedule.findAll({
     where: { roomId, dayOfWeek, status: 'aktif', [Op.and]: [{ startTime: { [Op.lt]: endTime } }, { endTime: { [Op.gt]: startTime } }] },
   });
@@ -161,10 +162,26 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Cek konflik umum (dengan pending/needs_negotiation)
+    // Cek konflik umum (dengan pending/needs_negotiation/approved)
     const conflictResult = await detectConflict({ roomId, bookingDate, startTime, endTime });
     if (conflictResult.status === 'conflict') {
-      return res.status(409).json({ message: `⚠️ KONFLIK! Ditemukan ${conflictResult.totalConflicts} bentrokan jadwal.`, ...conflictResult });
+      // Periksa apakah ada konflik yang tidak bisa dilompati (akademik, atau booking dengan prioritas >= weight)
+      const unbypassableConflicts = conflictResult.conflicts.filter(c => {
+        if (c.type === 'schedule') return true; // Akademik tidak bisa di-preempt
+        if (c.type === 'booking') {
+          const isActive = ['pending', 'approved', 'needs_negotiation', 'rescheduled'].includes(c.detail.status);
+          return isActive && c.detail.activityWeight >= weight;
+        }
+        return false;
+      });
+
+      if (unbypassableConflicts.length > 0) {
+        return res.status(409).json({
+          status: 'conflict',
+          message: `⚠️ KONFLIK! Ditemukan bentrokan jadwal dengan prioritas lebih tinggi/setara atau kegiatan akademik tetap.`,
+          conflicts: unbypassableConflicts,
+        });
+      }
     }
 
     const newBooking = await Booking.create({ roomId, userId, bookingDate, startTime, endTime, purpose, activityWeight: weight, status: 'pending' });
@@ -260,6 +277,29 @@ exports.updateBookingStatus = async (req, res) => {
 
     let preemptedBookings = [];
     if (status === 'approved') {
+      const conflictResult = await detectConflict({
+        roomId: booking.roomId, bookingDate: booking.bookingDate,
+        startTime: booking.startTime, endTime: booking.endTime,
+        excludeBookingId: booking.id
+      });
+
+      if (conflictResult.status === 'conflict') {
+        const unbypassableConflicts = conflictResult.conflicts.filter(c => {
+          if (c.type === 'schedule') return true;
+          if (c.type === 'booking') {
+            return c.detail.status === 'approved' && c.detail.activityWeight >= booking.activityWeight;
+          }
+          return false;
+        });
+
+        if (unbypassableConflicts.length > 0) {
+          return res.status(409).json({
+            message: 'Gagal approve! Terdapat konflik dengan jadwal akademik atau peminjaman lain yang sudah disetujui.',
+            conflicts: unbypassableConflicts
+          });
+        }
+      }
+
       preemptedBookings = await executePreemption({
         roomId: booking.roomId, bookingDate: booking.bookingDate,
         startTime: booking.startTime, endTime: booking.endTime,
