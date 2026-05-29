@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, Role } = require('../../models');
+const { User, Role, Matkul, Kelas, Schedule } = require('../../models');
+const { Op } = require('sequelize');
 
 // ==================== REGISTER ====================
 exports.register = async (req, res) => {
@@ -18,7 +19,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Email sudah terdaftar' });
     }
 
-    // Buat user baru (password di-hash otomatis oleh hook di model)
     const newUser = await User.create({
       username,
       email,
@@ -29,6 +29,30 @@ exports.register = async (req, res) => {
       kelasId: kelasId || null,
       isVerified: (roleId == 2 || !roleId) ? true : false, // Hanya Mahasiswa yang auto-verified
     });
+
+    // Otomatis assign Schedule ke PJ jika matkul dipilih
+    if (roleId == 4 && matkulId) {
+      const matkul = await Matkul.findByPk(matkulId);
+      const kelas = kelasId ? await Kelas.findByPk(kelasId) : null;
+      
+      if (matkul) {
+        let activityLike = `%${matkul.name}%`;
+        if (kelas) {
+          activityLike = `%${matkul.name}%${kelas.name}%`;
+        }
+
+        await Schedule.update(
+          { pjId: newUser.id },
+          {
+            where: {
+              activity: {
+                [Op.iLike]: activityLike
+              }
+            }
+          }
+        );
+      }
+    }
 
     // Ambil user beserta role-nya
     const userWithRole = await User.findByPk(newUser.id, {

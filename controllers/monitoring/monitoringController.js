@@ -8,9 +8,22 @@ exports.getMonitoringData = async (req, res) => {
     const { date } = req.query; // format: YYYY-MM-DD
 
     // Default: hari ini
-    const targetDate = date ? new Date(date) : new Date();
-    const dayOfWeek = targetDate.getDay(); // 0=Minggu, 1=Senin, ...
-    const dateString = targetDate.toISOString().split('T')[0];
+    let targetDate;
+    let dayOfWeek;
+    let dateString;
+    if (date) {
+      const [year, month, day] = date.split('-').map(Number);
+      targetDate = new Date(Date.UTC(year, month - 1, day));
+      dayOfWeek = targetDate.getUTCDay();
+      dateString = date;
+    } else {
+      const today = new Date();
+      targetDate = today;
+      dayOfWeek = today.getDay();
+      const offset = today.getTimezoneOffset();
+      const localToday = new Date(today.getTime() - (offset * 60 * 1000));
+      dateString = localToday.toISOString().split('T')[0];
+    }
 
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
@@ -50,7 +63,10 @@ exports.getMonitoringData = async (req, res) => {
 
     // Helper: cek apakah waktu overlap
     const isOverlap = (aStart, aEnd, bStart, bEnd) => {
-      return aStart < bEnd && aEnd > bStart;
+      // Pastikan bStart dan bEnd memiliki format HH:mm:00 agar komparasi string valid
+      const bStartFull = bStart.length === 5 ? bStart + ':00' : bStart;
+      const bEndFull = bEnd.length === 5 ? bEnd + ':00' : bEnd;
+      return aStart < bEndFull && aEnd > bStartFull;
     };
 
     // Build monitoring data per ruangan

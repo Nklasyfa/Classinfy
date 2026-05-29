@@ -7,11 +7,34 @@ const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu
 exports.getMySchedules = async (req, res) => {
   try {
     const userId = req.user.id;
-    const schedules = await Schedule.findAll({
-      where: { pjId: userId },
-      include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-      order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-    });
+    const user = await User.findByPk(userId);
+    let schedules = [];
+
+    if (user.roleId == 4) {
+      // PJ: Jadwal tanggung jawab
+      schedules = await Schedule.findAll({
+        where: { pjId: userId },
+        include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+        order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+      });
+    } else if (user.roleId == 2) {
+      // Mahasiswa: Jadwal kelas
+      if (user.kelasId) {
+        const { Kelas } = require('../../models');
+        const kelas = await Kelas.findByPk(user.kelasId);
+        if (kelas) {
+          schedules = await Schedule.findAll({
+            where: {
+              activity: {
+                [Op.iLike]: `%${kelas.name}%`
+              }
+            },
+            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+          });
+        }
+      }
+    }
 
     const schedulesWithDay = schedules.map(s => ({
       ...s.toJSON(),
@@ -19,7 +42,7 @@ exports.getMySchedules = async (req, res) => {
     }));
 
     res.status(200).json({
-      message: `Jadwal tanggung jawab saya`,
+      message: user.roleId == 2 ? `Jadwal Kelas Saya` : `Jadwal tanggung jawab saya`,
       data: schedulesWithDay,
     });
   } catch (error) {
@@ -132,6 +155,31 @@ exports.updateScheduleStatus = async (req, res) => {
 
     if (!schedule) {
       return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
+    }
+
+    // Validasi Waktu: Hanya bisa diupdate pada hari H & minimal 15 menit sebelum mulai
+    const now = new Date();
+    const currentDay = now.getDay();
+
+    if (schedule.dayOfWeek !== currentDay) {
+      return res.status(403).json({
+        message: 'Gagal! Konfirmasi status hanya bisa dilakukan pada hari-H kelas berlangsung.'
+      });
+    }
+
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+    
+    const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+    const startTimeInMinutes = startHour * 60 + startMinute;
+
+    if (currentTimeInMinutes < startTimeInMinutes - 15) {
+      const allowedHour = String(Math.floor((startTimeInMinutes - 15) / 60)).padStart(2, '0');
+      const allowedMinute = String((startTimeInMinutes - 15) % 60).padStart(2, '0');
+      return res.status(403).json({
+        message: `Terlalu cepat! Anda baru bisa mengubah status kelas minimal 15 menit sebelum mulai (Pukul ${allowedHour}:${allowedMinute} WIB).`
+      });
     }
 
     const oldStatus = schedule.status;

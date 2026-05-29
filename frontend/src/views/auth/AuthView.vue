@@ -73,26 +73,26 @@
           </div>
 
           <!-- Prodi, Matkul & Kelas (Register only) -->
-          <div v-if="!isLogin" class="grid grid-cols-2 gap-4">
-            <div>
+          <div v-if="!isLogin && selectedRoleId !== 1" class="grid grid-cols-2 gap-4">
+            <div :class="selectedRoleId === 3 ? 'col-span-2' : 'col-span-1'">
               <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Prodi</label>
               <select v-model="selectedProdiId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
                 <option value="" disabled>Pilih Prodi</option>
                 <option v-for="p in prodis" :key="p.id" :value="p.id">{{ p.name }}</option>
               </select>
             </div>
-            <div>
+            <div v-if="selectedRoleId === 4">
               <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Matkul</label>
               <select v-model="selectedMatkulId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
                 <option value="" disabled>Pilih Matkul</option>
-                <option v-for="m in matkuls" :key="m.id" :value="m.id">{{ m.name }}</option>
+                <option v-for="m in filteredMatkuls" :key="m.id" :value="m.id">{{ m.name }}</option>
               </select>
             </div>
-            <div class="col-span-2">
-              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Kelas (Opsional)</label>
+            <div v-if="selectedRoleId === 4 || selectedRoleId === 2" :class="selectedRoleId === 4 ? 'col-span-2' : 'col-span-1'">
+              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Kelas</label>
               <select v-model="selectedKelasId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
-                <option value="">Pilih Kelas (Boleh dikosongkan)</option>
-                <option v-for="k in kelasList" :key="k.id" :value="k.id">{{ k.name }}</option>
+                <option value="">Pilih Kelas</option>
+                <option v-for="k in filteredKelas" :key="k.id" :value="k.id">{{ k.name }}</option>
               </select>
             </div>
           </div>
@@ -209,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from 'axios'
@@ -228,6 +228,11 @@ const selectedRoleId = ref(2)
 const selectedProdiId = ref('')
 const selectedMatkulId = ref('')
 const selectedKelasId = ref('')
+
+watch(selectedProdiId, () => {
+  selectedMatkulId.value = ''
+  selectedKelasId.value = ''
+})
 
 const prodis = ref([])
 const matkuls = ref([])
@@ -249,6 +254,16 @@ const fetchAkademik = async () => {
   } catch(e) { console.error('Gagal memuat data akademik') }
 }
 
+const filteredMatkuls = computed(() => {
+  if (!selectedProdiId.value) return [];
+  return matkuls.value.filter(m => m.prodiId === selectedProdiId.value);
+});
+
+const filteredKelas = computed(() => {
+  if (!selectedProdiId.value) return [];
+  return kelasList.value.filter(k => k.prodiId === selectedProdiId.value);
+});
+
 onMounted(() => {
   fetchAkademik()
 })
@@ -256,7 +271,7 @@ onMounted(() => {
 const roleOptions = [
   { id: 2, label: 'Mahasiswa', icon: 'person' },
   { id: 4, label: 'PJ', icon: 'school' },
-  { id: 3, label: 'Tendik', icon: 'corporate_fare' },
+  { id: 3, label: 'Dosen', icon: 'corporate_fare' },
   { id: 1, label: 'Admin', icon: 'settings' },
 ]
 

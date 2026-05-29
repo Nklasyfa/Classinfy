@@ -7,6 +7,13 @@ import { useAuthStore } from '../../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
+const initials = computed(() => {
+  if (!authStore.user || !authStore.user.username) return 'U';
+  return authStore.user.username.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+})
+
+const unreadCount = ref(2)
+
 // Load auth state from localStorage on mount
 if (!authStore.isAuthenticated) {
   authStore.loadFromStorage()
@@ -155,11 +162,21 @@ onMounted(() => {
         <a v-else 
            class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer" 
            @click="goToPeminjaman">Peminjaman</a>
-        <a class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer">Tentang</a>
+        <a class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer" @click="router.push('/team')">Tentang</a>
       </nav>
 
       <!-- Jika sudah login: tampilkan info user + logout -->
       <div v-if="authStore.isAuthenticated" class="flex items-center gap-3">
+        <!-- Notification Icon -->
+        <router-link to="/notifikasi" class="relative p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Notifikasi">
+          <span class="material-symbols-outlined text-xl">notifications</span>
+          <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ unreadCount }}</span>
+        </router-link>
+        <!-- Chat Icon -->
+        <router-link to="/chat" class="p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Chat dengan Admin">
+          <span class="material-symbols-outlined text-xl">chat</span>
+        </router-link>
+
         <div class="text-right hidden sm:block">
           <p class="text-[11px] font-bold text-primary leading-none uppercase tracking-wider">{{ authStore.user?.role?.name || 'User' }}</p>
           <p class="text-[10px] text-slate-500 font-medium">{{ authStore.user?.username || '' }}</p>
@@ -169,7 +186,7 @@ onMounted(() => {
           class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform"
           title="Ke Dashboard"
         >
-          {{ authStore.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
+          {{ initials }}
         </div>
         <button
           @click="handleLogout"
@@ -349,7 +366,7 @@ onMounted(() => {
         <a v-if="authStore.isAuthenticated" class="hover:text-secondary transition-colors cursor-pointer" @click="goToDashboard">Dashboard</a>
         <a v-if="authStore.isAuthenticated && authStore.isAdmin" class="hover:text-secondary transition-colors cursor-pointer" @click="router.push('/admin/dashboard')">Fasilitas</a>
         <a v-else class="hover:text-secondary transition-colors cursor-pointer" @click="goToPeminjaman">Peminjaman</a>
-        <a class="hover:text-secondary transition-colors cursor-pointer">Tentang</a>
+        <a class="hover:text-secondary transition-colors cursor-pointer" @click="router.push('/team')">Tentang</a>
       </div>
     </footer>
 
