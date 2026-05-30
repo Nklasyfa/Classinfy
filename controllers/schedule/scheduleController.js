@@ -10,50 +10,81 @@ exports.getMySchedules = async (req, res) => {
     const user = await User.findByPk(userId);
     let schedules = [];
 
-    if (user.roleId == 4) {
-      // PJ: Jadwal tanggung jawab
+    if (user.roleId == 2 || user.roleId == 3 || user.roleId == 4) {
       const { Matkul, Kelas } = require('../../models');
-      let conditions = [];
+      let pjMatkulName = null;
+      let pjKelasName = null;
 
       if (user.matkulId) {
         const matkul = await Matkul.findByPk(user.matkulId);
-        if (matkul) conditions.push({ activity: { [Op.iLike]: `%${matkul.name}%` } });
+        if (matkul) pjMatkulName = matkul.name;
       }
-
       if (user.kelasId) {
         const kelas = await Kelas.findByPk(user.kelasId);
-        if (kelas) conditions.push({ activity: { [Op.iLike]: `%${kelas.name}%` } });
+        if (kelas) pjKelasName = kelas.name;
       }
 
-      if (conditions.length > 0) {
-        schedules = await Schedule.findAll({
-          where: { [Op.and]: conditions },
-          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-        });
-      } else {
-        schedules = await Schedule.findAll({
-          where: { pjId: userId },
-          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-        });
-      }
-    } else if (user.roleId == 2 || user.roleId == 3) {
-      // Mahasiswa (2) & Dosen (3): Tampilkan semua jadwal di Prodinya agar tidak kosong
       if (user.prodiId) {
-        const { Matkul } = require('../../models');
+        const { Prodi } = require('../../models');
+        const prodi = await Prodi.findByPk(user.prodiId);
         const matkuls = await Matkul.findAll({ where: { prodiId: user.prodiId } });
         
-        if (matkuls.length > 0) {
-          const matkulConditions = matkuls.map(m => ({ activity: { [Op.iLike]: `%${m.name}%` } }));
-          
+        if (prodi && matkuls.length > 0) {
+          const matkulConditions = matkuls.map(m => ({ 
+            activity: { [Op.iLike]: `${prodi.name}%${m.name}%` } 
+          }));
           schedules = await Schedule.findAll({
             where: { [Op.or]: matkulConditions },
             include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
             order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
           });
         }
+      } else {
+        // Fallback
+        let fallbackOr = [];
+        if (pjMatkulName) fallbackOr.push({ activity: { [Op.iLike]: `%${pjMatkulName}%` } });
+        if (pjKelasName) fallbackOr.push({ activity: { [Op.iLike]: `%${pjKelasName}%` } });
+        if (fallbackOr.length > 0) {
+          schedules = await Schedule.findAll({
+            where: { [Op.or]: fallbackOr },
+            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+          });
+        }
       }
+
+      const schedulesWithDay = schedules.map(s => {
+        let canEdit = false;
+        if (user.roleId == 3) {
+          canEdit = true; // Dosen can edit all
+        } else if (user.roleId == 4) {
+          // PJ can edit only their registered matkul AND kelas
+          let matches = false;
+          let matkulMatches = true;
+          let kelasMatches = true;
+          
+          if (pjMatkulName) matkulMatches = s.activity.toLowerCase().includes(pjMatkulName.toLowerCase());
+          if (pjKelasName) kelasMatches = s.activity.toLowerCase().includes(pjKelasName.toLowerCase());
+          
+          if (pjMatkulName || pjKelasName) {
+            matches = matkulMatches && kelasMatches;
+          }
+          if (s.pjId === user.id) matches = true;
+          
+          canEdit = matches;
+        }
+
+        return {
+          ...s.toJSON(),
+          dayName: DAY_NAMES[s.dayOfWeek],
+          canEdit
+        };
+      });
+
+      return res.status(200).json({
+        message: user.roleId == 2 ? `Jadwal Kelas Saya` : `Jadwal tanggung jawab saya`,
+        data: schedulesWithDay,
+      });
     }
 
     const schedulesWithDay = schedules.map(s => ({

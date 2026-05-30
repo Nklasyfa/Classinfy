@@ -91,3 +91,65 @@ exports.updateUserRole = async (req, res) => {
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
   }
 };
+
+// ==================== CREATE USER ====================
+exports.createUser = async (req, res) => {
+  try {
+    const { username, email, password, roleId, prodiId, matkulId, kelasId, isVerified } = req.body;
+    
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Username, email, dan password wajib diisi' });
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email sudah terdaftar' });
+    }
+
+    const newUser = await User.create({
+      username,
+      email,
+      password,
+      roleId: roleId || 2,
+      prodiId: prodiId || null,
+      matkulId: matkulId || null,
+      kelasId: kelasId || null,
+      isVerified: isVerified !== undefined ? isVerified : true,
+      verifiedAt: (isVerified !== false) ? new Date() : null,
+    });
+
+    const userWithRole = await User.findByPk(newUser.id, {
+      attributes: { exclude: ['password'] },
+      include: [
+        { model: Role, as: 'role', attributes: ['id', 'name'] },
+      ],
+    });
+
+    res.status(201).json({
+      message: 'User berhasil dibuat',
+      data: userWithRole,
+    });
+  } catch (error) {
+    console.error('Error createUser:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// ==================== DELETE USER ====================
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    await user.destroy();
+
+    res.status(200).json({ message: 'User berhasil dihapus' });
+  } catch (error) {
+    console.error('Error deleteUser:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};

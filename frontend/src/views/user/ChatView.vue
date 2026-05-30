@@ -70,17 +70,17 @@
     <main class="flex-1 flex flex-col px-6 pt-28 pb-5 max-w-3xl mx-auto w-full relative z-10" style="min-height: 0;">
       <!-- Title -->
       <div class="mb-4 shrink-0">
-        <h1 class="text-xl font-extrabold text-[#1A3C6E] tracking-tight">Chat dengan Admin</h1>
-        <p class="text-slate-500 text-xs font-medium">Sampaikan pertanyaan atau keperluan kamu langsung ke tim admin.</p>
+        <h1 class="text-xl font-extrabold text-[#1A3C6E] tracking-tight">{{ isAdmin ? 'Pesan Masuk (Mahasiswa)' : 'Chat dengan Admin' }}</h1>
+        <p class="text-slate-500 text-xs font-medium">{{ isAdmin ? 'Balas pertanyaan dari mahasiswa terkait fasilitas kampus.' : 'Sampaikan pertanyaan atau keperluan kamu langsung ke tim admin.' }}</p>
       </div>
 
       <!-- Chat Box -->
       <div class="bg-white rounded-3xl shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-slate-100 flex flex-col overflow-hidden" style="flex: 1; min-height: 0;">
         <!-- Chat Header -->
         <div class="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-          <div class="w-10 h-10 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white font-bold text-sm">A</div>
+          <div class="w-10 h-10 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white font-bold text-sm">{{ isAdmin ? 'F' : 'A' }}</div>
           <div>
-            <p class="font-extrabold text-[#1A3C6E] text-sm">Admin CLASSINFY</p>
+            <p class="font-extrabold text-[#1A3C6E] text-sm">{{ isAdmin ? 'Faiz (Mahasiswa S1 Inf)' : 'Admin CLASSINFY' }}</p>
             <div class="flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
               <span class="text-[10px] text-slate-400 font-medium">Online</span>
@@ -99,7 +99,7 @@
           </div>
 
           <div v-for="msg in messages" :key="msg.id" :class="msg.fromUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'">
-            <div v-if="!msg.fromUser" class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">A</div>
+            <div v-if="!msg.fromUser" class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">{{ isAdmin ? 'F' : 'A' }}</div>
             <div :class="[
               'max-w-[72%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed',
               msg.fromUser
@@ -114,7 +114,7 @@
 
           <!-- Typing indicator -->
           <div v-if="isTyping" class="flex items-end gap-2">
-            <div class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">A</div>
+            <div class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">{{ isAdmin ? 'F' : 'A' }}</div>
             <div class="bg-slate-100 px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style="animation-delay:0ms"></span>
               <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style="animation-delay:150ms"></span>
@@ -177,16 +177,32 @@ const handleLogout = () => {
 
 const now = () => new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(new Date())
 
-const messages = ref([
-  { id: 1, fromUser: false, text: 'Halo! 👋 Selamat datang di layanan chat CLASSINFY. Ada yang bisa kami bantu terkait peminjaman ruangan atau fasilitas kampus?', time: now() }
-])
+const isAdmin = computed(() => authStore.isAdmin)
 
-const quickReplies = [
-  'Status permohonan saya?',
-  'Cara mengajukan peminjaman?',
-  'Jadwal ruangan tersedia?',
-  'Syarat peminjaman apa saja?',
-]
+const messages = ref(
+  isAdmin.value
+    ? [
+        { id: 1, fromUser: false, text: 'Permisi min, saya mau tanya status peminjaman ruang MG1.04.07 untuk hari Senin besok bagaimana ya? Kok masih pending?', time: '09:41' },
+        { id: 2, fromUser: false, text: 'Mohon infonya ya min, soalnya acaranya penting. 🙏', time: '09:42' }
+      ]
+    : [
+        { id: 1, fromUser: false, text: 'Halo! 👋 Selamat datang di layanan chat CLASSINFY. Ada yang bisa kami bantu terkait peminjaman ruangan atau fasilitas kampus?', time: now() }
+      ]
+)
+
+const quickReplies = isAdmin.value 
+  ? [
+      'Halo, sedang kami proses ya.',
+      'Mohon ditunggu, masih tahap review.',
+      'Peminjaman sudah di-approve, silakan cek dashboard.',
+      'Maaf, ruangan sudah dipakai acara Fakultas.'
+    ]
+  : [
+      'Status permohonan saya?',
+      'Cara mengajukan peminjaman?',
+      'Jadwal ruangan tersedia?',
+      'Syarat peminjaman apa saja?',
+    ]
 
 const sendMessage = async () => {
   const text = inputText.value.trim()
@@ -194,13 +210,26 @@ const sendMessage = async () => {
   messages.value.push({ id: Date.now(), fromUser: true, text, time: now() })
   inputText.value = ''
   await scrollBottom()
-  isTyping.value = true
-  await scrollBottom()
-  setTimeout(async () => {
-    isTyping.value = false
-    messages.value.push({ id: Date.now() + 1, fromUser: false, text: getReply(text), time: now() })
+  
+  if (isAdmin.value) {
+    // Simulasi respons Mahasiswa
+    isTyping.value = true
     await scrollBottom()
-  }, 1500)
+    setTimeout(async () => {
+      isTyping.value = false
+      messages.value.push({ id: Date.now() + 1, fromUser: false, text: 'Baik min, terima kasih banyak atas informasinya! 🙏', time: now() })
+      await scrollBottom()
+    }, 2000)
+  } else {
+    // Simulasi respons Admin
+    isTyping.value = true
+    await scrollBottom()
+    setTimeout(async () => {
+      isTyping.value = false
+      messages.value.push({ id: Date.now() + 1, fromUser: false, text: getReply(text), time: now() })
+      await scrollBottom()
+    }, 1500)
+  }
 }
 
 const sendQuick = (t) => { inputText.value = t; sendMessage() }

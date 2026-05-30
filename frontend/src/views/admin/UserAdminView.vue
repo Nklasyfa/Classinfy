@@ -62,6 +62,37 @@ const updateRole = async (userId, roleId) => {
   }
 }
 
+const showModal = ref(false)
+const newUser = ref({
+  username: '',
+  email: '',
+  password: '',
+  roleId: 2,
+  isVerified: true
+})
+
+const createUser = async () => {
+  if (!newUser.value.username || !newUser.value.email || !newUser.value.password) return alert('Data tidak lengkap')
+  try {
+    await axios.post(`${API_URL}/api/users`, newUser.value, { headers: authStore.getAuthHeaders() })
+    showModal.value = false
+    newUser.value = { username: '', email: '', password: '', roleId: 2, isVerified: true }
+    fetchUsers()
+  } catch (error) {
+    alert('Gagal menambah user')
+  }
+}
+
+const deleteUser = async (id) => {
+  if (!confirm('Yakin ingin menghapus user ini?')) return
+  try {
+    await axios.delete(`${API_URL}/api/users/${id}`, { headers: authStore.getAuthHeaders() })
+    fetchUsers()
+  } catch (error) {
+    alert('Gagal menghapus user')
+  }
+}
+
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
     const matchesSearch = user.username.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
@@ -101,12 +132,18 @@ onMounted(() => {
           <h1 class="text-4xl font-extrabold tracking-tight text-primary">Direktori Pengguna</h1>
           <p class="text-slate-500 font-medium">Manajemen otorisasi dan kontrol akses pengguna.</p>
         </div>
-        <!-- Search Bar Floating -->
-        <div class="relative w-full max-w-md">
-          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-          <input v-model="searchQuery" 
-                 class="w-full bg-white border border-outline-variant/20 rounded-full py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary-fixed-dim transition-all outline-none" 
-                 placeholder="Cari nama, email..." type="text"/>
+        <!-- Search Bar & Add Button -->
+        <div class="flex items-center gap-4 w-full max-w-xl justify-end">
+          <div class="relative w-full max-w-md">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input v-model="searchQuery" 
+                   class="w-full bg-white border border-outline-variant/20 rounded-full py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary-fixed-dim transition-all outline-none" 
+                   placeholder="Cari nama, email..." type="text"/>
+          </div>
+          <button @click="showModal = true" class="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-all shadow-md flex items-center gap-2 whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Tambah User
+          </button>
         </div>
       </header>
 
@@ -196,11 +233,16 @@ onMounted(() => {
                 <span v-else class="status-chip bg-[#F59E0B]/20 text-[#D97706]"><span class="material-symbols-outlined text-[14px]">visibility</span>Pending</span>
               </td>
               <td class="px-6 py-4 text-right">
-                <button @click="toggleVerification(user)" 
-                        :class="user.isVerified ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'"
-                        class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer border border-transparent hover:border-current/20">
-                  {{ user.isVerified ? 'Suspend' : 'Verify' }}
-                </button>
+                <div class="flex items-center justify-end gap-2">
+                  <button @click="toggleVerification(user)" 
+                          :class="user.isVerified ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'"
+                          class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer border border-transparent hover:border-current/20">
+                    {{ user.isVerified ? 'Suspend' : 'Verify' }}
+                  </button>
+                  <button @click="deleteUser(user.id)" class="p-1.5 text-error hover:bg-error/10 rounded-lg transition-colors cursor-pointer" title="Hapus User">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -208,6 +250,46 @@ onMounted(() => {
         </div>
       </section>
     </main>
+
+    <!-- Modal Create User -->
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <button @click="showModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-error transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+        <h2 class="text-xl font-extrabold text-primary mb-6">Tambah Pengguna Baru</h2>
+        
+        <form @submit.prevent="createUser" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Nama Lengkap</label>
+            <input v-model="newUser.username" required type="text" class="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Nama..." />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Email</label>
+            <input v-model="newUser.email" required type="email" class="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="email@unesa.ac.id" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Password</label>
+            <input v-model="newUser.password" required type="text" class="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Password..." />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1">Role</label>
+            <select v-model="newUser.roleId" class="w-full px-4 py-2.5 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
+              <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="verifyCheck" v-model="newUser.isVerified" class="rounded border-outline-variant/30 text-primary focus:ring-primary/20" />
+            <label for="verifyCheck" class="text-xs font-bold text-slate-600 cursor-pointer">Langsung Terverifikasi</label>
+          </div>
+          
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" @click="showModal = false" class="px-5 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Batal</button>
+            <button type="submit" class="px-5 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:scale-105 transition-transform shadow-md">Simpan User</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 

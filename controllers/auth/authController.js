@@ -27,7 +27,7 @@ exports.register = async (req, res) => {
       prodiId: prodiId || null,
       matkulId: matkulId || null,
       kelasId: kelasId || null,
-      isVerified: (roleId == 2 || !roleId) ? true : false, // Hanya Mahasiswa yang auto-verified
+      isVerified: false, // Semua role termasuk Mahasiswa wajib diverifikasi Admin
     });
 
     // Otomatis assign Schedule ke PJ jika matkul dipilih

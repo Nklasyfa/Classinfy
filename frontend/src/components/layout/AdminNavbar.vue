@@ -1,10 +1,15 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+const unverifiedCount = ref(0)
 
 const navLinks = [
   { name: 'Dashboard', path: '/admin/dashboard' },
@@ -18,6 +23,16 @@ const logout = () => {
   authStore.logout()
   router.push('/auth/login')
 }
+
+onMounted(async () => {
+  try {
+    const res = await axios.get(`${API_URL}/api/users`, { headers: authStore.getAuthHeaders() })
+    const users = res.data.data || []
+    unverifiedCount.value = users.filter(u => !u.isVerified).length
+  } catch (error) {
+    console.error('Failed fetching users for notif', error)
+  }
+})
 </script>
 
 <template>
@@ -46,8 +61,21 @@ const logout = () => {
         </router-link>
       </div>
 
-      <!-- User Profile -->
+      <!-- User Profile & Icons -->
       <div class="flex items-center gap-4 border-l border-slate-200 pl-6 ml-2">
+        <!-- Notification Icon -->
+        <router-link to="/admin/users" class="relative p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Notifikasi Verifikasi User">
+          <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">notifications</span>
+          <span v-if="unverifiedCount > 0" class="absolute top-1 right-1 bg-red-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-md border border-white animate-pulse">
+            {{ unverifiedCount }}
+          </span>
+        </router-link>
+        
+        <!-- Chat Icon -->
+        <router-link to="/chat" class="p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Pesan Masuk">
+          <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">chat</span>
+        </router-link>
+
         <div class="text-right hidden sm:block">
           <p class="text-[10px] font-black text-[#1A3C6E] uppercase tracking-widest leading-none">ADMIN</p>
           <p class="text-xs font-medium text-slate-400">{{ authStore.user?.username || 'Administrator' }}</p>

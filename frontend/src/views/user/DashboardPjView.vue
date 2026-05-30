@@ -188,28 +188,31 @@
                   </span>
                 </td>
                 <td v-if="authStore.user?.role?.id !== 2" class="px-6 py-4 text-right relative">
-                  <button
-                    @click="toggleDropdown(s.id)"
-                    :class="openDropdownId === s.id ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-[#1A3C6E] hover:bg-slate-200'"
-                    class="px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 ml-auto transition-colors cursor-pointer"
-                  >
-                    Ubah Status
-                    <span class="material-symbols-outlined text-xs">{{ openDropdownId === s.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
-                  </button>
-                  <div v-if="openDropdownId === s.id" class="absolute right-6 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-40">
-                    <button @click="updateStatus(s.id, 'aktif')" class="w-full text-left px-3 py-2 hover:bg-green-50 text-green-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
-                      <span class="w-2 h-2 rounded-full bg-green-500"></span> ✅ Dipakai
+                  <template v-if="s.canEdit">
+                    <button
+                      @click="toggleDropdown(s.id)"
+                      :class="openDropdownId === s.id ? 'bg-[#1A3C6E] text-white' : 'bg-slate-100 text-[#1A3C6E] hover:bg-slate-200'"
+                      class="px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 ml-auto transition-colors cursor-pointer"
+                    >
+                      Ubah Status
+                      <span class="material-symbols-outlined text-xs">{{ openDropdownId === s.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</span>
                     </button>
-                    <button @click="updateStatus(s.id, 'online')" class="w-full text-left px-3 py-2 hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
-                      <span class="w-2 h-2 rounded-full bg-blue-500"></span> 🔵 Online
-                    </button>
-                    <button @click="updateStatus(s.id, 'ditunda')" class="w-full text-left px-3 py-2 hover:bg-orange-50 text-orange-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
-                      <span class="w-2 h-2 rounded-full bg-orange-400"></span> 🟡 Ditunda
-                    </button>
-                    <button @click="updateStatus(s.id, 'batal')" class="w-full text-left px-3 py-2 hover:bg-red-50 text-red-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
-                      <span class="w-2 h-2 rounded-full bg-red-500"></span> 🔴 Dibatalkan
-                    </button>
-                  </div>
+                    <div v-if="openDropdownId === s.id" class="absolute right-6 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-100 p-1.5 z-40">
+                      <button @click="updateStatus(s.id, 'aktif')" class="w-full text-left px-3 py-2 hover:bg-green-50 text-green-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> ✅ Dipakai
+                      </button>
+                      <button @click="updateStatus(s.id, 'online')" class="w-full text-left px-3 py-2 hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> 🔵 Online
+                      </button>
+                      <button @click="updateStatus(s.id, 'ditunda')" class="w-full text-left px-3 py-2 hover:bg-orange-50 text-orange-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-orange-400"></span> 🟡 Ditunda
+                      </button>
+                      <button @click="updateStatus(s.id, 'batal')" class="w-full text-left px-3 py-2 hover:bg-red-50 text-red-700 font-bold text-xs rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> 🔴 Dibatalkan
+                      </button>
+                    </div>
+                  </template>
+                  <span v-else class="text-[10px] text-slate-300 font-medium italic block mr-2">Hanya PJ terkait</span>
                 </td>
               </tr>
             </tbody>
