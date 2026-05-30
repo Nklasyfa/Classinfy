@@ -29,28 +29,26 @@ exports.getMonitoringData = async (req, res) => {
 
     const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-    // Ambil semua ruangan
-    const rooms = await Room.findAll({
-      order: [['code', 'ASC']],
-    });
-
-    // Ambil semua jadwal tetap untuk hari ini
-    const schedules = await Schedule.findAll({
-      where: { dayOfWeek },
-      order: [['startTime', 'ASC']],
-    });
-
-    // Ambil semua booking pada tanggal ini (status: pending, approved)
-    const bookings = await Booking.findAll({
-      where: {
-        bookingDate: dateString,
-        status: { [Op.in]: ['pending', 'approved'] },
-      },
-      include: [
-        { model: User, as: 'user', attributes: ['id', 'username'] },
-      ],
-      order: [['startTime', 'ASC']],
-    });
+    // Ambil semua ruangan, jadwal, dan booking secara paralel untuk mempercepat load
+    const [rooms, schedules, bookings] = await Promise.all([
+      Room.findAll({
+        order: [['code', 'ASC']],
+      }),
+      Schedule.findAll({
+        where: { dayOfWeek },
+        order: [['startTime', 'ASC']],
+      }),
+      Booking.findAll({
+        where: {
+          bookingDate: dateString,
+          status: { [Op.in]: ['pending', 'approved'] },
+        },
+        include: [
+          { model: User, as: 'user', attributes: ['id', 'username'] },
+        ],
+        order: [['startTime', 'ASC']],
+      })
+    ]);
 
     // Slot waktu standar (7 slot besar agar rapi di UI)
     const timeSlots = [

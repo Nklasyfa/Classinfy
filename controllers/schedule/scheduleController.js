@@ -12,23 +12,43 @@ exports.getMySchedules = async (req, res) => {
 
     if (user.roleId == 4) {
       // PJ: Jadwal tanggung jawab
-      schedules = await Schedule.findAll({
-        where: { pjId: userId },
-        include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-        order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-      });
-    } else if (user.roleId == 2) {
-      // Mahasiswa: Jadwal kelas
+      const { Matkul, Kelas } = require('../../models');
+      let conditions = [];
+
+      if (user.matkulId) {
+        const matkul = await Matkul.findByPk(user.matkulId);
+        if (matkul) conditions.push({ activity: { [Op.iLike]: `%${matkul.name}%` } });
+      }
+
       if (user.kelasId) {
-        const { Kelas } = require('../../models');
         const kelas = await Kelas.findByPk(user.kelasId);
-        if (kelas) {
+        if (kelas) conditions.push({ activity: { [Op.iLike]: `%${kelas.name}%` } });
+      }
+
+      if (conditions.length > 0) {
+        schedules = await Schedule.findAll({
+          where: { [Op.and]: conditions },
+          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+        });
+      } else {
+        schedules = await Schedule.findAll({
+          where: { pjId: userId },
+          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+        });
+      }
+    } else if (user.roleId == 2 || user.roleId == 3) {
+      // Mahasiswa (2) & Dosen (3): Tampilkan semua jadwal di Prodinya agar tidak kosong
+      if (user.prodiId) {
+        const { Matkul } = require('../../models');
+        const matkuls = await Matkul.findAll({ where: { prodiId: user.prodiId } });
+        
+        if (matkuls.length > 0) {
+          const matkulConditions = matkuls.map(m => ({ activity: { [Op.iLike]: `%${m.name}%` } }));
+          
           schedules = await Schedule.findAll({
-            where: {
-              activity: {
-                [Op.iLike]: `%${kelas.name}%`
-              }
-            },
+            where: { [Op.or]: matkulConditions },
             include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
             order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
           });
