@@ -18,6 +18,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Routing Endpoint (dengan prefix /api)
 app.use('/api/auth', authRoutes);
@@ -177,6 +179,27 @@ if (!process.env.VERCEL) {
 
     // ── Sprint 4 Migrations ──────────────────────────────────────────
     try {
+      // Booking: attachmentUrl
+      await sequelize.query(
+        'ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "attachmentUrl" VARCHAR(255)'
+      );
+
+      // UserMatkuls join table for many-to-many User and Matkul
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "UserMatkuls" (
+          "userId" UUID NOT NULL REFERENCES "Users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+          "matkulId" INTEGER NOT NULL REFERENCES "Matkuls"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+          PRIMARY KEY ("userId", "matkulId")
+        )
+      `);
+      
+      // Migrate existing matkulId from Users to UserMatkuls
+      await sequelize.query(`
+        INSERT INTO "UserMatkuls" ("userId", "matkulId")
+        SELECT "id", "matkulId" FROM "Users" WHERE "matkulId" IS NOT NULL
+        ON CONFLICT DO NOTHING
+      `);
+
       // Booking: tambah ENUM value 'rescheduled'
       await sequelize.query(`
         DO $$ BEGIN

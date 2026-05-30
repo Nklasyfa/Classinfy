@@ -34,13 +34,17 @@
         </div>
 
         <!-- Conflict Banner -->
-        <div v-if="booking.status === 'needs_negotiation'" class="mb-8 w-full bg-[#FEF2F2] border-y-2 border-x-0 md:border-x-2 md:rounded-xl border-[#DC2626] p-5 flex items-center gap-4 animate-pulse">
+        <div v-if="booking.status === 'needs_negotiation' || hasConflict" class="mb-8 w-full bg-[#FEF2F2] border-y-2 border-x-0 md:border-x-2 md:rounded-xl border-[#DC2626] p-5 flex items-center gap-4 animate-pulse">
           <div class="bg-[#DC2626] text-white p-2 rounded-lg flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined">warning</span>
           </div>
           <div>
             <h3 class="font-bold text-[#DC2626] tracking-tight">⚠️ KONFLIK JADWAL TERDETEKSI</h3>
-            <p class="text-sm text-[#991B1B]">Sistem mendeteksi adanya status "Needs Negotiation" atau tumpang tindih waktu untuk Ruang {{ booking.room?.name }}.</p>
+            <p class="text-sm text-[#991B1B]" v-if="hasConflict">
+              Sistem mendeteksi adanya {{ conflicts.length }} jadwal yang bertabrakan (Prioritas Anda: {{ booking.activityWeight }}). 
+              Silakan pertimbangkan konflik tersebut.
+            </p>
+            <p class="text-sm text-[#991B1B]" v-else>Sistem mendeteksi adanya status "Needs Negotiation".</p>
           </div>
         </div>
 
@@ -100,6 +104,14 @@
                   <p class="text-on-surface leading-relaxed italic text-sm border-l-4 border-primary/20 pl-4 py-1">
                     "{{ booking.purpose }}"
                   </p>
+                </div>
+
+                <div class="sm:col-span-2" v-if="booking.attachmentUrl">
+                  <p class="text-xs font-label text-slate-400 uppercase tracking-widest mb-2">Lampiran Dokumen</p>
+                  <a :href="`${API_URL}${booking.attachmentUrl}`" target="_blank" class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold hover:bg-primary/20 transition-colors text-sm">
+                    <span class="material-symbols-outlined">description</span>
+                    Lihat Dokumen
+                  </a>
                 </div>
               </div>
             </div>
@@ -181,7 +193,7 @@
               <ul class="text-sm text-slate-600 space-y-3 font-medium">
                 <li class="flex gap-2">
                   <span class="text-secondary">•</span>
-                  Prioritas 5 merupakan hak Rektorat untuk override jadwal lain.
+                  Prioritas 1 merupakan hak Rektorat untuk override jadwal lain.
                 </li>
                 <li class="flex gap-2">
                   <span class="text-secondary">•</span>
@@ -247,6 +259,29 @@ const bookingLogs = ref([])
 const isLoading = ref(true)
 const isProcessing = ref(false)
 const adminNotes = ref('')
+const hasConflict = ref(false)
+const conflicts = ref([])
+
+const checkConflict = async () => {
+  try {
+    const res = await axios.post(`${API_URL}/api/bookings/check-conflict`, {
+      roomId: booking.value.roomId,
+      bookingDate: booking.value.bookingDate,
+      startTime: booking.value.startTime,
+      endTime: booking.value.endTime
+    }, { headers: authStore.getAuthHeaders() })
+    
+    let fetchedConflicts = res.data.conflicts || [];
+    fetchedConflicts = fetchedConflicts.filter(c => c.type !== 'booking' || c.detail.id !== booking.value.id)
+    
+    if (fetchedConflicts.length > 0) {
+      hasConflict.value = true
+      conflicts.value = fetchedConflicts
+    }
+  } catch(e) {
+    console.error('Failed checking conflict', e)
+  }
+}
 
 const fetchBookingDetail = async () => {
   try {
@@ -260,6 +295,9 @@ const fetchBookingDetail = async () => {
     console.error('Failed fetching detail permohonan', err)
   } finally {
     isLoading.value = false
+    if (booking.value && ['pending', 'needs_negotiation'].includes(booking.value.status)) {
+      checkConflict()
+    }
   }
 }
 
@@ -356,11 +394,10 @@ const formatDateTime = (dateStr) => {
 
 const getPriorityColor = (weight) => {
   switch(weight) {
-    case 5: return 'bg-red-600'
-    case 4: return 'bg-orange-500'
+    case 1: return 'bg-red-600'
+    case 2: return 'bg-orange-500'
     case 3: return 'bg-amber-500'
-    case 2: return 'bg-green-500'
-    case 1: return 'bg-blue-400'
+    case 4: return 'bg-blue-400'
     default: return 'bg-slate-300'
   }
 }

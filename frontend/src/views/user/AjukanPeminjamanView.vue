@@ -115,7 +115,7 @@
             </div>
           </div>
           <div class="flex gap-3 shrink-0">
-            <button @click.prevent="() => {}" type="button" class="px-5 py-2.5 rounded-full bg-[#F59E0B] text-white font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer">Tetap Lanjutkan</button>
+            <button @click.prevent="scrollToSubmit" type="button" class="px-5 py-2.5 rounded-full bg-[#F59E0B] text-white font-bold text-sm hover:scale-105 active:scale-95 transition-all cursor-pointer">Tetap Lanjutkan</button>
             <button @click.prevent="showModal = true" type="button" class="px-5 py-2.5 rounded-full bg-white text-[#F59E0B] border border-[#F59E0B] font-bold text-sm hover:bg-[#FFFBEB] transition-colors cursor-pointer">Pilih Waktu Lain</button>
           </div>
         </div>
@@ -168,20 +168,17 @@
             </button>
             <div v-show="showDropdown" class="absolute top-full left-0 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-surface-container-low overflow-hidden z-20">
               <div class="p-2 space-y-1">
-                <div @click="submitPriority(5)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===5}">
-                  <span class="w-2 h-2 rounded-full bg-red-600"></span><span class="text-sm font-semibold">Priority 5: Tingkat Eksekutif/Rektorat</span>
-                </div>
-                <div @click="submitPriority(4)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===4}">
-                  <span class="w-2 h-2 rounded-full bg-orange-500"></span><span class="text-sm font-semibold">Priority 4: Kemahasiswaan & BEM Fakultas</span>
-                </div>
-                <div @click="submitPriority(3)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===3}">
-                  <span class="w-2 h-2 rounded-full bg-yellow-500"></span><span class="text-sm font-semibold">Priority 3: Kegiatan Utama Mahasiswa (Seminar/Lomba)</span>
+                <div @click="submitPriority(1)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===1}">
+                  <span class="w-2 h-2 rounded-full bg-red-600"></span><span class="text-sm font-semibold">Priority 1: Tingkat Eksekutif/Rektorat</span>
                 </div>
                 <div @click="submitPriority(2)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===2}">
-                  <span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm font-semibold">Priority 2: Kegiatan Organisasi</span>
+                  <span class="w-2 h-2 rounded-full bg-orange-500"></span><span class="text-sm font-semibold">Priority 2: Event Seminar/Event</span>
                 </div>
-                <div @click="submitPriority(1)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===1}">
-                  <span class="w-2 h-2 rounded-full bg-blue-400"></span><span class="text-sm font-semibold">Priority 1: Kegiatan Lainnya (Reguler)</span>
+                <div @click="submitPriority(3)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===3}">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-sm font-semibold">Priority 3: Peminjaman Kelas untuk Matkul</span>
+                </div>
+                <div @click="submitPriority(4)" class="flex items-center gap-3 p-3 hover:bg-surface-container-low rounded-xl cursor-pointer" :class="{'bg-surface-container-low text-primary font-bold': form.activityWeight===4}">
+                  <span class="w-2 h-2 rounded-full bg-blue-400"></span><span class="text-sm font-semibold">Priority 4: Rapat Organisasi Kemahasiswaan</span>
                 </div>
               </div>
             </div>
@@ -215,11 +212,7 @@
             <label class="block text-sm font-bold text-primary px-1">Jurusan / Prodi<span class="text-error">*</span></label>
             <select v-model="form.jurusan" class="w-full h-14 bg-surface-container-low border-none rounded-[12px] px-5 font-medium text-on-surface focus:ring-2 focus:ring-primary-fixed-dim outline-none cursor-pointer appearance-none">
               <option value="">Pilih Jurusan...</option>
-              <option>Teknik Informatika</option>
-              <option>Sistem Informasi</option>
-              <option>Manajemen Informatika</option>
-              <option>Pendidikan Teknologi Informasi</option>
-              <option>Lainnya</option>
+              <option v-for="p in prodis" :key="p.id" :value="p.name">{{ p.name }}</option>
             </select>
           </div>
         </div>
@@ -358,7 +351,7 @@ const form = ref({
   eventName: '',
   purpose: '',
   jurusan: '',
-  activityWeight: 2
+  activityWeight: 4
 })
 
 // Validation State
@@ -387,21 +380,19 @@ const formatDateIndo = (dateStr) => {
 
 const getPriorityLabel = (weight) => {
   switch(weight) {
-    case 5: return "Priority 5: Tingkat Eksekutif/Rektorat";
-    case 4: return "Priority 4: Kemahasiswaan & BEM Fakultas";
-    case 3: return "Priority 3: Kegiatan Utama Mahasiswa (Seminar/Lomba)";
-    case 2: return "Priority 2: Kegiatan Organisasi";
-    case 1: return "Priority 1: Kegiatan Lainnya (Reguler)";
+    case 1: return "Priority 1: Tingkat Eksekutif/Rektorat";
+    case 2: return "Priority 2: Event Seminar/Event";
+    case 3: return "Priority 3: Peminjaman Kelas untuk Matkul";
+    case 4: return "Priority 4: Rapat Organisasi Kemahasiswaan";
     default: return "Pilih Prioritas";
   }
 }
 const getPriorityColor = (weight) => {
   switch(weight) {
-    case 5: return "bg-red-600";
-    case 4: return "bg-orange-500";
+    case 1: return "bg-red-600";
+    case 2: return "bg-orange-500";
     case 3: return "bg-amber-500";
-    case 2: return "bg-red-500";
-    case 1: return "bg-blue-400";
+    case 4: return "bg-blue-400";
     default: return "bg-slate-300";
   }
 }
@@ -417,6 +408,13 @@ const onFileChange = (e) => {
   if (file) {
     uploadedFile.value = file
   }
+}
+
+const scrollToSubmit = () => {
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: 'smooth'
+  })
 }
 
 // Fetch Master Ruangan
@@ -435,6 +433,14 @@ const fetchRooms = async () => {
     // Trigger conflict check setelah room pertama di-set
     checkConflict()
   }
+}
+
+const prodis = ref([])
+const fetchProdis = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/api/prodis`)
+    prodis.value = res.data.data || []
+  } catch(e) { console.error('Failed fetching prodis', e) }
 }
 
 // Check Conflict with API
@@ -493,11 +499,18 @@ const handleSubmit = async () => {
   
   try {
     const purposeString = `${form.value.eventName} | Jurusan: ${form.value.jurusan} | Peserta: ${participantCount.value} orang | WA: +62${whatsappNumber.value} | Alasan: ${form.value.purpose}`
-    const payload = {
-      ...form.value,
-      purpose: purposeString
+    const formData = new FormData();
+    formData.append('roomId', form.value.roomId);
+    formData.append('bookingDate', form.value.bookingDate);
+    formData.append('startTime', form.value.startTime);
+    formData.append('endTime', form.value.endTime);
+    formData.append('purpose', purposeString);
+    formData.append('activityWeight', form.value.activityWeight);
+    if (uploadedFile.value) {
+      formData.append('attachment', uploadedFile.value);
     }
-    await axios.post(`${API_URL}/api/bookings`, payload, { headers: authStore.getAuthHeaders() })
+    
+    await axios.post(`${API_URL}/api/bookings`, formData, { headers: authStore.getAuthHeaders() })
     alert('Permohonan berhasil diajukan! Anda dapat memantau status pada Dashboard Anda.')
     router.push('/dashboard')
   } catch (err) {
@@ -522,6 +535,7 @@ const handleLogout = () => {
 
 onMounted(() => {
   fetchRooms()
+  fetchProdis()
 })
 </script>
 

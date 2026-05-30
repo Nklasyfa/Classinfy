@@ -5,11 +5,10 @@ const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu
 
 // ========== PRIORITY TIER LABELS ==========
 const PRIORITY_LABELS = {
-  5: 'Tingkat Eksekutif/Rektorat',
-  4: 'Kemahasiswaan & BEM Fakultas',
-  3: 'Kegiatan Utama Mahasiswa (Seminar/Lomba)',
-  2: 'Rapat Rutin UKM/HIMA',
-  1: 'Kegiatan Reguler/Diskusi Umum',
+  1: 'Tingkat Eksekutif/Rektorat',
+  2: 'Event Seminar/Event',
+  3: 'Peminjaman Kelas untuk Matkul',
+  4: 'Rapat Organisasi Kemahasiswaan'
 };
 
 // ========== HELPERS ==========
@@ -62,7 +61,7 @@ async function executePreemption({ roomId, bookingDate, startTime, endTime, appr
     where: {
       roomId, bookingDate,
       status: { [Op.in]: ['pending', 'approved', 'rescheduled'] },
-      activityWeight: { [Op.lt]: approvedWeight },
+      activityWeight: { [Op.gt]: approvedWeight },
       id: { [Op.ne]: excludeBookingId },
       [Op.and]: [{ startTime: { [Op.lt]: endTime } }, { endTime: { [Op.gt]: startTime } }],
     },
@@ -124,9 +123,9 @@ exports.createBooking = async (req, res) => {
     if (startTime >= endTime)
       return res.status(400).json({ message: 'startTime harus lebih awal dari endTime' });
 
-    const weight = activityWeight ? parseInt(activityWeight) : 1;
-    if (weight < 1 || weight > 5)
-      return res.status(400).json({ message: 'activityWeight harus antara 1-5' });
+    const weight = activityWeight ? parseInt(activityWeight) : 4;
+    if (weight < 1 || weight > 4)
+      return res.status(400).json({ message: 'activityWeight harus antara 1-4' });
 
     const room = await Room.findByPk(roomId);
     if (!room) return res.status(404).json({ message: 'Ruangan tidak ditemukan' });
@@ -142,7 +141,7 @@ exports.createBooking = async (req, res) => {
       where: {
         roomId, bookingDate,
         status: { [Op.in]: ['approved'] },
-        activityWeight: { [Op.gt]: weight },
+        activityWeight: { [Op.lt]: weight },
         [Op.and]: [{ startTime: { [Op.lt]: endTime } }, { endTime: { [Op.gt]: startTime } }],
       },
       include: [{ model: User, as: 'user', attributes: ['id', 'username'] }],
@@ -167,10 +166,10 @@ exports.createBooking = async (req, res) => {
     if (conflictResult.status === 'conflict') {
       // Periksa apakah ada konflik yang tidak bisa dilompati (akademik, atau booking dengan prioritas >= weight)
       const unbypassableConflicts = conflictResult.conflicts.filter(c => {
-        if (c.type === 'schedule') return true; // Akademik tidak bisa di-preempt
+        if (c.type === 'schedule') return weight >= 3; // Schedule (Matkul) is tier 3. Tier 1/2 can bypass to pending.
         if (c.type === 'booking') {
           const isActive = ['pending', 'approved', 'needs_negotiation', 'rescheduled'].includes(c.detail.status);
-          return isActive && c.detail.activityWeight >= weight;
+          return isActive && c.detail.activityWeight <= weight;
         }
         return false;
       });
@@ -184,7 +183,8 @@ exports.createBooking = async (req, res) => {
       }
     }
 
-    const newBooking = await Booking.create({ roomId, userId, bookingDate, startTime, endTime, purpose, activityWeight: weight, status: 'pending' });
+    const attachmentUrl = req.file ? '/uploads/' + req.file.filename : null;
+    const newBooking = await Booking.create({ roomId, userId, bookingDate, startTime, endTime, purpose, activityWeight: weight, status: 'pending', attachmentUrl });
 
     const bookingDetail = await Booking.findByPk(newBooking.id, { include: withRelations });
 
@@ -285,9 +285,9 @@ exports.updateBookingStatus = async (req, res) => {
 
       if (conflictResult.status === 'conflict') {
         const unbypassableConflicts = conflictResult.conflicts.filter(c => {
-          if (c.type === 'schedule') return true;
+          if (c.type === 'schedule') return booking.activityWeight >= 3;
           if (c.type === 'booking') {
-            return c.detail.status === 'approved' && c.detail.activityWeight >= booking.activityWeight;
+            return c.detail.status === 'approved' && c.detail.activityWeight <= booking.activityWeight;
           }
           return false;
         });
@@ -434,7 +434,7 @@ exports.forceOverride = async (req, res) => {
       bookingDate: booking.bookingDate,
       startTime: booking.startTime,
       endTime: booking.endTime,
-      approvedWeight: 99, // Force override beats everything
+      approvedWeight: 0, // Force override beats everything (even tier 1)
       excludeBookingId: booking.id,
       actorId,
       actorRole: 'Admin',

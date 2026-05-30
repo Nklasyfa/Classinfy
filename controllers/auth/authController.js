@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, Role, Matkul, Kelas, Schedule } = require('../../models');
+const { User, Role, Matkul, Kelas, Schedule, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 
 // ==================== REGISTER ====================
@@ -25,29 +25,42 @@ exports.register = async (req, res) => {
       password,
       roleId: roleId || 2, // Default: Mahasiswa
       prodiId: prodiId || null,
-      matkulId: matkulId || null,
       kelasId: kelasId || null,
       isVerified: false, // Semua role termasuk Mahasiswa wajib diverifikasi Admin
     });
+    
+    const matkulIds = req.body.matkulIds || [];
+    
+    // Associating many-to-many matkuls
+    if (matkulIds && matkulIds.length > 0) {
+      await sequelize.query(`
+        INSERT INTO "UserMatkuls" ("userId", "matkulId")
+        VALUES ${matkulIds.map(mId => `('${newUser.id}', ${mId})`).join(',')}
+        ON CONFLICT DO NOTHING
+      `);
+    }
 
     // Otomatis assign Schedule ke PJ jika matkul dipilih
-    if (roleId == 4 && matkulId) {
-      const matkul = await Matkul.findByPk(matkulId);
+    if (roleId == 4 && matkulIds && matkulIds.length > 0) {
+      const matkuls = await Matkul.findAll({ where: { id: matkulIds } });
       const kelas = kelasId ? await Kelas.findByPk(kelasId) : null;
       
-      if (matkul) {
-        let activityLike = `%${matkul.name}%`;
-        if (kelas) {
-          activityLike = `%${matkul.name}%${kelas.name}%`;
+      if (matkuls.length > 0) {
+        let orConditions = [];
+        
+        for (const matkul of matkuls) {
+          if (kelas) {
+            orConditions.push({ activity: { [Op.iLike]: `%${matkul.name}%${kelas.name}%` } });
+          } else {
+            orConditions.push({ activity: { [Op.iLike]: `%${matkul.name}%` } });
+          }
         }
 
         await Schedule.update(
           { pjId: newUser.id },
           {
             where: {
-              activity: {
-                [Op.iLike]: activityLike
-              }
+              [Op.or]: orConditions
             }
           }
         );

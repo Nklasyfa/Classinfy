@@ -11,62 +11,66 @@ exports.getMySchedules = async (req, res) => {
     let schedules = [];
 
     if (user.roleId == 2 || user.roleId == 3 || user.roleId == 4) {
-      const { Matkul, Kelas } = require('../../models');
-      let pjMatkulName = null;
+      const { Matkul, Kelas, Prodi } = require('../../models');
       let pjKelasName = null;
+      let userMatkuls = [];
 
-      if (user.matkulId) {
-        const matkul = await Matkul.findByPk(user.matkulId);
-        if (matkul) pjMatkulName = matkul.name;
+      const userWithMatkuls = await User.findByPk(userId, { include: ['matkuls'] });
+      if (userWithMatkuls && userWithMatkuls.matkuls) {
+        userMatkuls = userWithMatkuls.matkuls;
       }
+
+      // If user still uses old matkulId, fetch it as fallback
+      if (userMatkuls.length === 0 && user.matkulId) {
+         const oldMatkul = await Matkul.findByPk(user.matkulId);
+         if (oldMatkul) userMatkuls.push(oldMatkul);
+      }
+
       if (user.kelasId) {
         const kelas = await Kelas.findByPk(user.kelasId);
         if (kelas) pjKelasName = kelas.name;
       }
 
-      if (user.prodiId) {
-        const { Prodi } = require('../../models');
-        const prodi = await Prodi.findByPk(user.prodiId);
-        const matkuls = await Matkul.findAll({ where: { prodiId: user.prodiId } });
-        
-        if (prodi && matkuls.length > 0) {
-          const matkulConditions = matkuls.map(m => ({ 
-            activity: { [Op.iLike]: `${prodi.name}%${m.name}%` } 
-          }));
-          schedules = await Schedule.findAll({
-            where: { [Op.or]: matkulConditions },
-            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-          });
-        }
-      } else {
-        // Fallback
-        let fallbackOr = [];
-        if (pjMatkulName) fallbackOr.push({ activity: { [Op.iLike]: `%${pjMatkulName}%` } });
-        if (pjKelasName) fallbackOr.push({ activity: { [Op.iLike]: `%${pjKelasName}%` } });
+      let fallbackOr = [];
+      if (userMatkuls.length > 0) {
+        userMatkuls.forEach(m => fallbackOr.push({ activity: { [Op.iLike]: `%${m.name}%` } }));
+      }
+      if (pjKelasName) {
+        // Jika PJ punya spesifik kelas
         if (fallbackOr.length > 0) {
-          schedules = await Schedule.findAll({
-            where: { [Op.or]: fallbackOr },
-            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-          });
+          // Hanya cari yang matkul AND kelas cocok
+          fallbackOr = userMatkuls.map(m => ({ activity: { [Op.iLike]: `%${m.name}%${pjKelasName}%` } }));
+        } else {
+          fallbackOr.push({ activity: { [Op.iLike]: `%${pjKelasName}%` } });
         }
+      }
+
+      if (fallbackOr.length > 0) {
+        schedules = await Schedule.findAll({
+          where: { [Op.or]: fallbackOr },
+          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+        });
       }
 
       const schedulesWithDay = schedules.map(s => {
         let canEdit = false;
         if (user.roleId == 3) {
-          canEdit = true; // Dosen can edit all
+          canEdit = true; // Dosen can edit all their matkuls
         } else if (user.roleId == 4) {
-          // PJ can edit only their registered matkul AND kelas
+          // PJ can edit only their registered matkuls AND kelas
           let matches = false;
-          let matkulMatches = true;
+          let matkulMatches = false;
           let kelasMatches = true;
           
-          if (pjMatkulName) matkulMatches = s.activity.toLowerCase().includes(pjMatkulName.toLowerCase());
+          if (userMatkuls.length > 0) {
+             matkulMatches = userMatkuls.some(m => s.activity.toLowerCase().includes(m.name.toLowerCase()));
+          } else {
+             matkulMatches = true;
+          }
           if (pjKelasName) kelasMatches = s.activity.toLowerCase().includes(pjKelasName.toLowerCase());
           
-          if (pjMatkulName || pjKelasName) {
+          if (userMatkuls.length > 0 || pjKelasName) {
             matches = matkulMatches && kelasMatches;
           }
           if (s.pjId === user.id) matches = true;

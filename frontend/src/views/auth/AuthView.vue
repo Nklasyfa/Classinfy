@@ -81,12 +81,34 @@
                 <option v-for="p in prodis" :key="p.id" :value="p.id">{{ p.name }}</option>
               </select>
             </div>
+            <!-- Matkul untuk PJ (Hanya bisa milih 1) -->
             <div v-if="selectedRoleId === 4">
               <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Matkul</label>
-              <select v-model="selectedMatkulId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+              <select v-model="singleSelectedMatkulId" class="w-full px-4 py-3.5 bg-surface-container-low border-none rounded-[12px] text-sm text-on-surface focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
                 <option value="" disabled>Pilih Matkul</option>
                 <option v-for="m in filteredMatkuls" :key="m.id" :value="m.id">{{ m.name }}</option>
               </select>
+            </div>
+
+            <!-- Matkul untuk Dosen (Bisa milih beberapa dengan UI Pill) -->
+            <div v-if="selectedRoleId === 3" class="col-span-2">
+              <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Pilih Matkul yang Diampu</label>
+              <div v-if="filteredMatkuls.length === 0" class="text-xs text-slate-400 italic">Silakan pilih prodi terlebih dahulu.</div>
+              <div v-else class="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto p-2 border border-slate-100 rounded-xl bg-surface-container-lowest">
+                <button
+                  v-for="m in filteredMatkuls" :key="m.id"
+                  @click="toggleMatkul(m.id)"
+                  type="button"
+                  :class="[
+                    'px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors cursor-pointer',
+                    selectedMatkulIds.includes(m.id)
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-surface-container-low text-slate-500 border-transparent hover:bg-surface-container-high'
+                  ]"
+                >
+                  {{ m.name }}
+                </button>
+              </div>
             </div>
             <div v-if="selectedRoleId === 4 || selectedRoleId === 2" :class="selectedRoleId === 4 ? 'col-span-2' : 'col-span-1'">
               <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2 ml-1">Kelas</label>
@@ -226,13 +248,23 @@ const email = ref('')
 const password = ref('')
 const selectedRoleId = ref(2)
 const selectedProdiId = ref('')
-const selectedMatkulId = ref('')
+const selectedMatkulIds = ref([])
+const singleSelectedMatkulId = ref('')
 const selectedKelasId = ref('')
 
 watch(selectedProdiId, () => {
-  selectedMatkulId.value = ''
+  selectedMatkulIds.value = []
+  singleSelectedMatkulId.value = ''
   selectedKelasId.value = ''
 })
+
+const toggleMatkul = (id) => {
+  if (selectedMatkulIds.value.includes(id)) {
+    selectedMatkulIds.value = selectedMatkulIds.value.filter(m => m !== id)
+  } else {
+    selectedMatkulIds.value.push(id)
+  }
+}
 
 const prodis = ref([])
 const matkuls = ref([])
@@ -272,7 +304,6 @@ const roleOptions = [
   { id: 2, label: 'Mahasiswa', icon: 'person' },
   { id: 4, label: 'PJ', icon: 'school' },
   { id: 3, label: 'Dosen', icon: 'corporate_fare' },
-  { id: 1, label: 'Admin', icon: 'settings' },
 ]
 
 const handleSubmit = async () => {
@@ -301,13 +332,20 @@ const handleSubmit = async () => {
         return
       }
 
+      let finalMatkulIds = undefined;
+      if (selectedRoleId.value === 4 && singleSelectedMatkulId.value) {
+        finalMatkulIds = [singleSelectedMatkulId.value];
+      } else if (selectedRoleId.value === 3 && selectedMatkulIds.value.length) {
+        finalMatkulIds = selectedMatkulIds.value;
+      }
+
       await axios.post(`${API_URL}/api/auth/register`, {
         username: username.value,
         email: email.value,
         password: password.value,
         roleId: selectedRoleId.value,
         prodiId: selectedProdiId.value || undefined,
-        matkulId: selectedMatkulId.value || undefined,
+        matkulIds: finalMatkulIds,
         kelasId: selectedKelasId.value || undefined,
       })
 

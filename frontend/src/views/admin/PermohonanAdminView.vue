@@ -231,11 +231,10 @@ const getAvatarClass = (status) => {
 
 const getPriorityColor = (weight) => {
   switch(weight) {
-    case 5: return 'bg-red-600'
-    case 4: return 'bg-orange-500'
+    case 1: return 'bg-red-600'
+    case 2: return 'bg-orange-500'
     case 3: return 'bg-amber-500'
-    case 2: return 'bg-green-500'
-    case 1: return 'bg-blue-400'
+    case 4: return 'bg-blue-400'
     default: return 'bg-slate-300'
   }
 }

@@ -10,7 +10,7 @@ exports.getAllUsers = async (req, res) => {
       include: [
         { model: Role, as: 'role', attributes: ['id', 'name'] },
         { model: Prodi, as: 'prodi', attributes: ['id', 'name'] },
-        { model: Matkul, as: 'matkul', attributes: ['id', 'name'] },
+        { model: Matkul, as: 'matkuls', attributes: ['id', 'name'], through: { attributes: [] } },
         { model: Kelas, as: 'kelas', attributes: ['id', 'name'] }
       ],
       order: [['createdAt', 'DESC']],

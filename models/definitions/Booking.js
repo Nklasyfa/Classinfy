@@ -39,9 +39,9 @@ const Booking = sequelize.define('Booking', {
   activityWeight: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1,
-    validate: { min: 1, max: 5 },
-    comment: 'Bobot prioritas: 1=rendah (umum), 2=organisasi, 3=UKM, 4=akademik, 5=rektorat',
+    defaultValue: 4,
+    validate: { min: 1, max: 4 },
+    comment: 'Bobot prioritas: 1=rektorat, 2=event, 3=matkul, 4=rapat',
   },
   rejectionReason: {
     type: DataTypes.TEXT,
@@ -61,6 +61,11 @@ const Booking = sequelize.define('Booking', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
     comment: 'Flag: true jika persetujuan dilakukan dengan bypass konflik',
+  },
+  attachmentUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'URL/path lampiran proposal kegiatan',
   },
 }, {
   tableName: 'Bookings',

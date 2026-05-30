@@ -203,9 +203,9 @@ onMounted(() => {
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-0.5">
                   <span v-if="user.prodi" class="text-[10px] font-bold text-primary">{{ user.prodi.name }}</span>
-                  <span v-if="user.matkul" class="text-[10px] text-slate-500">{{ user.matkul.name }}</span>
+                  <span v-if="user.matkuls && user.matkuls.length" class="text-[10px] text-slate-500">{{ user.matkuls.map(m => m.name).join(', ') }}</span>
                   <span v-if="user.kelas" class="text-[10px] font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded-md inline-block w-max mt-0.5">{{ user.kelas.name }}</span>
-                  <span v-if="!user.prodi && !user.matkul && !user.kelas" class="text-[10px] text-slate-300 italic">-</span>
+                  <span v-if="!user.prodi && (!user.matkuls || !user.matkuls.length) && !user.kelas" class="text-[10px] text-slate-300 italic">-</span>
                 </div>
               </td>
               <td class="px-6 py-4">
