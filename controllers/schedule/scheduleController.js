@@ -15,14 +15,16 @@ exports.getMySchedules = async (req, res) => {
       let pjKelasName = null;
       let userMatkuls = [];
 
-      const userWithMatkuls = await User.findByPk(userId, { include: ['matkuls'] });
+      const userWithMatkuls = await User.findByPk(userId, { 
+        include: [{ association: 'matkuls', include: ['prodi'] }] 
+      });
       if (userWithMatkuls && userWithMatkuls.matkuls) {
         userMatkuls = userWithMatkuls.matkuls;
       }
 
       // If user still uses old matkulId, fetch it as fallback
       if (userMatkuls.length === 0 && user.matkulId) {
-         const oldMatkul = await Matkul.findByPk(user.matkulId);
+         const oldMatkul = await Matkul.findByPk(user.matkulId, { include: ['prodi'] });
          if (oldMatkul) userMatkuls.push(oldMatkul);
       }
 
@@ -31,26 +33,59 @@ exports.getMySchedules = async (req, res) => {
         if (kelas) pjKelasName = kelas.name;
       }
 
-      let fallbackOr = [];
-      if (userMatkuls.length > 0) {
-        userMatkuls.forEach(m => fallbackOr.push({ activity: { [Op.iLike]: `%${m.name}%` } }));
-      }
-      if (pjKelasName) {
-        // Jika PJ punya spesifik kelas
-        if (fallbackOr.length > 0) {
-          // Hanya cari yang matkul AND kelas cocok
-          fallbackOr = userMatkuls.map(m => ({ activity: { [Op.iLike]: `%${m.name}%${pjKelasName}%` } }));
+      if ((user.roleId == 2 || user.roleId == 4) && user.prodiId) {
+        // Mahasiswa & PJ melihat semua matkul di prodi
+        const prodi = await Prodi.findByPk(user.prodiId);
+        const allMatkulsInProdi = await Matkul.findAll({ where: { prodiId: user.prodiId } });
+        
+        let prodiOr = [];
+        if (prodi) {
+          allMatkulsInProdi.forEach(m => prodiOr.push({ activity: { [Op.iLike]: `%${prodi.name}%${m.name}%` } }));
         } else {
-          fallbackOr.push({ activity: { [Op.iLike]: `%${pjKelasName}%` } });
+          allMatkulsInProdi.forEach(m => prodiOr.push({ activity: { [Op.iLike]: `%${m.name}%` } }));
         }
-      }
+        
+        // Fallback: Jika relasi matkul ke prodi kosong di DB, gunakan nama prodi
+        if (prodiOr.length === 0 && prodi) {
+          prodiOr.push({ activity: { [Op.iLike]: `%${prodi.name}%` } });
+        }
+        
+        if (prodiOr.length > 0) {
+          schedules = await Schedule.findAll({
+            where: { [Op.or]: prodiOr },
+            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+          });
+        }
+      } else {
+        // Dosen (3) hanya melihat matkul yang diampu secara spesifik (termasuk Prodinya agar tidak bocor)
+        let fallbackOr = [];
+        if (userMatkuls.length > 0) {
+          userMatkuls.forEach(m => {
+             const prodiPrefix = m.prodi ? `%${m.prodi.name}%` : '%';
+             fallbackOr.push({ activity: { [Op.iLike]: `${prodiPrefix}${m.name}%` } });
+          });
+        }
+        
+        // Dosen tidak difilter berdasarkan kelasId. Hanya Mahasiswa/PJ jika ada.
+        if (pjKelasName && (user.roleId == 2 || user.roleId == 4)) {
+          if (fallbackOr.length > 0) {
+            fallbackOr = userMatkuls.map(m => {
+               const prodiPrefix = m.prodi ? `%${m.prodi.name}%` : '%';
+               return { activity: { [Op.iLike]: `${prodiPrefix}${m.name}%${pjKelasName}%` } };
+            });
+          } else {
+            fallbackOr.push({ activity: { [Op.iLike]: `%${pjKelasName}%` } });
+          }
+        }
 
-      if (fallbackOr.length > 0) {
-        schedules = await Schedule.findAll({
-          where: { [Op.or]: fallbackOr },
-          include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
-          order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
-        });
+        if (fallbackOr.length > 0) {
+          schedules = await Schedule.findAll({
+            where: { [Op.or]: fallbackOr },
+            include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
+            order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+          });
+        }
       }
 
       const schedulesWithDay = schedules.map(s => {
@@ -64,17 +99,22 @@ exports.getMySchedules = async (req, res) => {
           let kelasMatches = true;
           
           if (userMatkuls.length > 0) {
-             matkulMatches = userMatkuls.some(m => s.activity.toLowerCase().includes(m.name.toLowerCase()));
-          } else {
-             matkulMatches = true;
+             matkulMatches = userMatkuls.some(m => (s.activity || '').toLowerCase().includes((m.name || '').toLowerCase()));
           }
-          if (pjKelasName) kelasMatches = s.activity.toLowerCase().includes(pjKelasName.toLowerCase());
+          if (pjKelasName) {
+             kelasMatches = (s.activity || '').toLowerCase().includes((pjKelasName || '').toLowerCase());
+          }
           
-          if (userMatkuls.length > 0 || pjKelasName) {
+          // Harus cocok dua-duanya jika dua-duanya ada
+          if (userMatkuls.length > 0 && pjKelasName) {
             matches = matkulMatches && kelasMatches;
+          } else if (userMatkuls.length > 0) {
+            matches = matkulMatches;
+          } else if (pjKelasName) {
+            matches = kelasMatches;
           }
-          if (s.pjId === user.id) matches = true;
           
+          if (s.pjId === user.id) matches = true;
           canEdit = matches;
         }
 
@@ -101,8 +141,8 @@ exports.getMySchedules = async (req, res) => {
       data: schedulesWithDay,
     });
   } catch (error) {
-    console.error('Error getMySchedules:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+    console.error("Error in getMySchedules:", error);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message, stack: error.stack });
   }
 };
 

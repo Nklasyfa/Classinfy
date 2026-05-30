@@ -58,8 +58,10 @@ Kelas.belongsTo(Prodi, { foreignKey: 'prodiId', as: 'prodi' });
 Prodi.hasMany(User, { foreignKey: 'prodiId', as: 'users' });
 User.belongsTo(Prodi, { foreignKey: 'prodiId', as: 'prodi' });
 
-Matkul.belongsToMany(User, { through: 'UserMatkuls', foreignKey: 'matkulId', otherKey: 'userId', as: 'users' });
-User.belongsToMany(Matkul, { through: 'UserMatkuls', foreignKey: 'userId', otherKey: 'matkulId', as: 'matkuls' });
+const UserMatkuls = sequelize.define('UserMatkuls', {}, { timestamps: false });
+
+Matkul.belongsToMany(User, { through: UserMatkuls, foreignKey: 'matkulId', otherKey: 'userId', as: 'users' });
+User.belongsToMany(Matkul, { through: UserMatkuls, foreignKey: 'userId', otherKey: 'matkulId', as: 'matkuls' });
 
 Kelas.hasMany(User, { foreignKey: 'kelasId', as: 'users' });
 User.belongsTo(Kelas, { foreignKey: 'kelasId', as: 'kelas' });
