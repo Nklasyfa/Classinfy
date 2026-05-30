@@ -9,6 +9,7 @@ const roomRoutes = require('./routes/room/roomRoutes');
 const scheduleRoutes = require('./routes/schedule/scheduleRoutes');
 const bookingRoutes = require('./routes/booking/bookingRoutes');
 const monitoringRoutes = require('./routes/monitoring/monitoringRoutes');
+const chatRoutes = require('./routes/chat/chatRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.use('/api', bookingRoutes);
 app.use('/api', monitoringRoutes); // Public - tanpa auth
 app.use('/api', require('./routes/user/userRoutes'));
 app.use('/api', require('./routes/akademik/akademikRoutes'));
+app.use('/api', chatRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -214,6 +216,24 @@ if (!process.env.VERCEL) {
       console.log('✅ Sprint 4 migration selesai');
     } catch (e) {
       console.error('⚠️ Sprint 4 migration warning:', e.message);
+    }
+
+    try {
+      // Chat Messages table
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "Messages" (
+          "id" UUID PRIMARY KEY,
+          "userId" UUID NOT NULL REFERENCES "Users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+          "senderId" UUID NOT NULL REFERENCES "Users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+          "text" TEXT NOT NULL,
+          "isRead" BOOLEAN DEFAULT FALSE,
+          "createdAt" TIMESTAMPTZ NOT NULL,
+          "updatedAt" TIMESTAMPTZ NOT NULL
+        )
+      `);
+      console.log('✅ Chat migration selesai');
+    } catch (e) {
+      console.error('⚠️ Chat migration warning:', e.message);
     }
 
     // 5. Sync semua model yang tersisa

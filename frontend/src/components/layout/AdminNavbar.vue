@@ -65,7 +65,7 @@ onMounted(async () => {
       <div class="flex items-center gap-4 border-l border-slate-200 pl-6 ml-2">
         <!-- Notification Icon -->
         <router-link to="/admin/users" class="relative p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Notifikasi Verifikasi User">
-          <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">notifications</span>
+          <span class="material-symbols-outlined text-xl">notifications</span>
           <span v-if="unverifiedCount > 0" class="absolute top-1 right-1 bg-red-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-md border border-white animate-pulse">
             {{ unverifiedCount }}
           </span>
@@ -73,7 +73,7 @@ onMounted(async () => {
         
         <!-- Chat Icon -->
         <router-link to="/chat" class="p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Pesan Masuk">
-          <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">chat</span>
+          <span class="material-symbols-outlined text-xl">forum</span>
         </router-link>
 
         <div class="text-right hidden sm:block">

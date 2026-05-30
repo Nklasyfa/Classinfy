@@ -6,6 +6,7 @@ const Schedule = require('./definitions/Schedule');
 const Booking = require('./definitions/Booking');
 const ScheduleLog = require('./definitions/ScheduleLog');
 const BookingLog = require('./definitions/BookingLog');
+const Message = require('./definitions/Message');
 
 // ==================== Associations ====================
 
@@ -67,6 +68,13 @@ User.belongsTo(Kelas, { foreignKey: 'kelasId', as: 'kelas' });
 User.hasMany(Schedule, { foreignKey: 'pjId', as: 'managedSchedules' });
 Schedule.belongsTo(User, { foreignKey: 'pjId', as: 'pj' });
 
+// Chat System: User <-> Message
+User.hasMany(Message, { foreignKey: 'userId', as: 'userMessages' });
+Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' });
+Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
+
 // ==================== Seed Functions ====================
 
 const seedRoles = async () => {
@@ -99,5 +107,6 @@ module.exports = {
   Prodi,
   Matkul,
   Kelas,
+  Message,
   seedRoles,
 };
