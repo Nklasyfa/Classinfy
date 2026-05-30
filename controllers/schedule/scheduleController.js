@@ -118,8 +118,29 @@ exports.getMySchedules = async (req, res) => {
           canEdit = matches;
         }
 
+        const sData = s.toJSON();
+        
+        // Auto-cancel logic for 'ditunda' (unconfirmed schedules)
+        if (sData.status === 'ditunda') {
+            const now = new Date();
+            const wib = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+            const distanceDays = (sData.dayOfWeek - wib.getDay() + 7) % 7;
+            
+            // Jika hari H dan sudah lewat batas konfirmasi (-15 menit)
+            if (distanceDays === 0) {
+              const currentMins = wib.getHours() * 60 + wib.getMinutes();
+              const [sHour, sMin] = sData.startTime.split(':').map(Number);
+              const startMins = sHour * 60 + sMin;
+              if (currentMins >= startMins - 15) {
+                  sData.status = 'batal';
+                  // Jika sudah batal karena telat, seharusnya tidak bisa diedit lagi
+                  // (Backend juga akan memblokir ini)
+              }
+            }
+        }
+
         return {
-          ...s.toJSON(),
+          ...sData,
           dayName: DAY_NAMES[s.dayOfWeek],
           canEdit
         };
@@ -252,28 +273,29 @@ exports.updateScheduleStatus = async (req, res) => {
       return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
     }
 
-    // Validasi Waktu: Hanya bisa diupdate pada hari H & minimal 15 menit sebelum mulai
+    // Validasi Waktu: minimal 2 hari sebelum matkul dan maximal nya adalah 15 mnit sbelum matkul
     const now = new Date();
-    const currentDay = now.getDay();
+    const currentWibTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+    const currentDay = currentWibTime.getDay();
 
-    if (schedule.dayOfWeek !== currentDay) {
+    const distanceDays = (schedule.dayOfWeek - currentDay + 7) % 7;
+    
+    if (distanceDays > 2) {
       return res.status(403).json({
-        message: 'Gagal! Konfirmasi status hanya bisa dilakukan pada hari-H kelas berlangsung.'
+        message: 'Gagal! Konfirmasi status baru bisa dilakukan mulai 2 hari sebelum jadwal.'
       });
     }
 
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const currentHour = currentWibTime.getHours();
+    const currentMinute = currentWibTime.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
     
     const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
     const startTimeInMinutes = startHour * 60 + startMinute;
 
-    if (currentTimeInMinutes < startTimeInMinutes - 15) {
-      const allowedHour = String(Math.floor((startTimeInMinutes - 15) / 60)).padStart(2, '0');
-      const allowedMinute = String((startTimeInMinutes - 15) % 60).padStart(2, '0');
+    if (distanceDays === 0 && currentTimeInMinutes >= startTimeInMinutes - 15) {
       return res.status(403).json({
-        message: `Terlalu cepat! Anda baru bisa mengubah status kelas minimal 15 menit sebelum mulai (Pukul ${allowedHour}:${allowedMinute} WIB).`
+        message: 'Terlambat! Batas waktu konfirmasi status adalah 15 menit sebelum kelas dimulai.'
       });
     }
 

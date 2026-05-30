@@ -129,7 +129,7 @@ function extractSchedules(expandedCells, dayOfWeek, jamHeader, dataStartCol) {
       endTime: endJam.end,
       activity: cleanedActivity,
       semester: 'Genap 2025/2026',
-      status: 'aktif',
+      status: 'ditunda',
     });
   }
 

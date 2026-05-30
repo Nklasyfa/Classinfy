@@ -234,9 +234,6 @@ onMounted(() => {
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-bold font-label">
           <div class="w-2 h-2 rounded-full bg-green-600"></div> Dipakai
         </div>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold font-label">
-          <div class="w-2 h-2 rounded-full bg-orange-600"></div> Ditunda
-        </div>
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-xs font-bold font-label">
           <div class="w-2 h-2 rounded-full bg-red-600"></div> Dibatalkan
         </div>

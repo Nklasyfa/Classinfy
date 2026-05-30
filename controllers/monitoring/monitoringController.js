@@ -109,7 +109,7 @@ exports.getMonitoringData = async (req, res) => {
           const scheduleStatusMap = {
             aktif: 'terjadwal',   // Jadwal aktif = tampil sebagai terjadwal
             online: 'online',     // Kelas dipindah online
-            ditunda: 'ditunda',   // Kelas ditunda
+            ditunda: 'terjadwal', // Ditunda (belum konfirmasi) = tampil sebagai terjadwal
             batal: 'dibatalkan',  // Kelas dibatalkan
           };
 
@@ -125,11 +125,21 @@ exports.getMonitoringData = async (req, res) => {
           
           // Format ke string tanggal lokal (YYYY-MM-DD) di zona waktu WIB
           const wibDateOptions = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
-          // toLocaleDateString('en-CA') outputnya YYYY-MM-DD
           const todayStr = today.toLocaleDateString('en-CA', wibDateOptions);
           
-          if (dateString === todayStr && matchedSchedule.status === 'aktif') {
-            if (currentTime >= matchedSchedule.startTime && currentTime <= matchedSchedule.endTime) {
+          if (dateString === todayStr) {
+            const [cHour, cMin] = currentTime.split(':').map(Number);
+            const currentMins = cHour * 60 + cMin;
+            
+            const [sHour, sMin] = matchedSchedule.startTime.split(':').map(Number);
+            const startMins = sHour * 60 + sMin;
+            
+            // Auto-cancel (dibatalkan) jika belum dikonfirmasi (ditunda) dan waktu < 15 menit sebelum mulai
+            if (matchedSchedule.status === 'ditunda' && currentMins >= startMins - 15) {
+              computedStatus = 'dibatalkan';
+            } 
+            // Jika sudah dikonfirmasi (aktif) dan sedang berlangsung, ubah jadi 'dipakai'
+            else if (matchedSchedule.status === 'aktif' && currentTime >= matchedSchedule.startTime && currentTime <= matchedSchedule.endTime) {
               computedStatus = 'dipakai';
             }
           }
