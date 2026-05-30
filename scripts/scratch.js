@@ -1,21 +1,11 @@
-const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const { User, Kelas } = require('../models');
 
-async function test() {
-  const token = jwt.sign({ id: '132adad5-1449-45f8-8229-30908432c8b7', username: 'rora', email: 'rora@gmail.com' }, 'classify_secret_key_2026', { expiresIn: '1d' });
-  
-  try {
-    const res = await fetch('http://localhost:3000/api/schedules/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const json = await res.json();
-    console.log('API RESPONSE STATUS:', res.status);
-    console.log('SCHEDULES LENGTH:', json.data.length);
-    json.data.forEach(s => {
-      console.log(`- ${s.activity} | canEdit: ${s.canEdit}`);
-    });
-  } catch (err) {
-    console.error('FETCH ERROR:', err.message);
+async function fixRias() {
+  const kelas2024B = await Kelas.findOne({ where: { name: '2024B' } });
+  if (kelas2024B) {
+    await User.update({ kelasId: kelas2024B.id }, { where: { username: 'RIAS' } });
+    console.log('Fixed RIAS to 2024B!');
   }
-  process.exit(0);
 }
-test();
+fixRias().then(() => process.exit(0));

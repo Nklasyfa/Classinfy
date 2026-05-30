@@ -335,7 +335,7 @@ const filteredSchedules = computed(() => {
 
 const todaySchedulesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum).length)
 const activeSchedulesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum && s.status === 'aktif').length)
-const pendingUpdatesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum && (!s.status || s.status === 'terjadwal')).length)
+const pendingUpdatesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum && (!s.status || s.status === 'ditunda')).length)
 
 const fetchMySchedules = async () => {
   isLoading.value = true

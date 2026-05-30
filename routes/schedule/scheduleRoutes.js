@@ -14,4 +14,7 @@ router.post('/schedules', verifyToken, isAdmin, scheduleController.createSchedul
 router.patch('/schedules/:id/status', verifyToken, isPJ, scheduleController.updateScheduleStatus);
 router.get('/schedules/:id/logs', verifyToken, scheduleController.getScheduleLogs);
 
+// Cron Job (Tiap Minggu)
+router.get('/cron/reset-schedules', scheduleController.resetSchedules);
+
 module.exports = router;

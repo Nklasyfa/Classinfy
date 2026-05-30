@@ -107,7 +107,7 @@ exports.getMonitoringData = async (req, res) => {
         if (matchedSchedule) {
           // Map schedule dynamic status ke monitoring status
           const scheduleStatusMap = {
-            aktif: 'terjadwal',   // Jadwal aktif = tampil sebagai terjadwal
+            aktif: 'dipakai',     // Jadwal aktif langsung jadi dipakai sesuai request
             online: 'online',     // Kelas dipindah online
             ditunda: 'terjadwal', // Ditunda (belum konfirmasi) = tampil sebagai terjadwal
             batal: 'dibatalkan',  // Kelas dibatalkan
@@ -138,10 +138,6 @@ exports.getMonitoringData = async (req, res) => {
             if (matchedSchedule.status === 'ditunda' && currentMins >= startMins - 15) {
               computedStatus = 'dibatalkan';
             } 
-            // Jika sudah dikonfirmasi (aktif) dan sedang berlangsung, ubah jadi 'dipakai'
-            else if (matchedSchedule.status === 'aktif' && currentTime >= matchedSchedule.startTime && currentTime <= matchedSchedule.endTime) {
-              computedStatus = 'dipakai';
-            }
           }
 
           return {

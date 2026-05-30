@@ -273,18 +273,12 @@ exports.updateScheduleStatus = async (req, res) => {
       return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
     }
 
-    // Validasi Waktu: minimal 2 hari sebelum matkul dan maximal nya adalah 15 mnit sbelum matkul
+    // Validasi Waktu: bisa diupdate seminggu sebelum, maksimal 15 menit sebelum matkul
     const now = new Date();
     const currentWibTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
     const currentDay = currentWibTime.getDay();
 
     const distanceDays = (schedule.dayOfWeek - currentDay + 7) % 7;
-    
-    if (distanceDays > 2) {
-      return res.status(403).json({
-        message: 'Gagal! Konfirmasi status baru bisa dilakukan mulai 2 hari sebelum jadwal.'
-      });
-    }
 
     const currentHour = currentWibTime.getHours();
     const currentMinute = currentWibTime.getMinutes();
@@ -372,5 +366,31 @@ exports.getScheduleLogs = async (req, res) => {
   } catch (error) {
     console.error('Error getScheduleLogs:', error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// ==================== CRON: RESET STATUS JADWAL (HARI MINGGU JAM 00:00) ====================
+exports.resetSchedules = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const { Schedule } = require('../../models');
+    const { Op } = require('sequelize');
+
+    const [updatedCount] = await Schedule.update(
+      { status: 'ditunda' },
+      { where: { status: { [Op.ne]: 'ditunda' } } }
+    );
+
+    return res.status(200).json({
+      message: 'Berhasil mereset status jadwal ke ditunda',
+      updatedCount
+    });
+  } catch (error) {
+    console.error("Error in resetSchedules:", error);
+    res.status(500).json({ message: 'Terjadi kesalahan saat mereset jadwal', error: error.message });
   }
 };
