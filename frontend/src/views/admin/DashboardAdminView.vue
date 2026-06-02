@@ -148,79 +148,7 @@
         </div>
       </section>
 
-      <!-- Section D: Conflict Priority & Resolution Flow -->
-      <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Priority Ladder -->
-        <div class="bg-surface-container-lowest rounded-lg p-8 shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-outline-variant/10">
-          <div class="flex items-center gap-3 mb-8">
-            <span class="material-symbols-outlined text-amber-500">leaderboard</span>
-            <h3 class="text-xl font-bold text-primary">Priority Ladder</h3>
-          </div>
-          <div class="space-y-6">
-            <div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl relative overflow-hidden group">
-              <div class="absolute left-0 top-0 bottom-0 w-2 bg-[#FFD700]"></div>
-              <span class="material-symbols-outlined text-3xl text-[#FFD700]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
-              <div class="flex-1">
-                <h4 class="text-sm font-extrabold text-primary">Rectorate / Academic</h4>
-                <p class="text-[10px] font-medium text-slate-500">Level 5 - Maximum Override Power</p>
-              </div>
-              <span class="text-[10px] font-bold text-white bg-primary px-3 py-1 rounded-full">GOLD</span>
-            </div>
-            <div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl relative overflow-hidden group">
-              <div class="absolute left-0 top-0 bottom-0 w-2 bg-[#C0C0C0]"></div>
-              <span class="material-symbols-outlined text-3xl text-[#94A3B8]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
-              <div class="flex-1">
-                <h4 class="text-sm font-extrabold text-primary">Faculty Events</h4>
-                <p class="text-[10px] font-medium text-slate-500">Level 3~4 - High Resolution Priority</p>
-              </div>
-              <span class="text-[10px] font-bold text-primary-container bg-surface-container-highest px-3 py-1 rounded-full">SILVER</span>
-            </div>
-            <div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-xl relative overflow-hidden group">
-              <div class="absolute left-0 top-0 bottom-0 w-2 bg-[#CD7F32]"></div>
-              <span class="material-symbols-outlined text-3xl text-[#CD7F32]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
-              <div class="flex-1">
-                <h4 class="text-sm font-extrabold text-primary">Student Organizations</h4>
-                <p class="text-[10px] font-medium text-slate-500">Level 1~2 - Peer-to-Peer Negotiation</p>
-              </div>
-              <span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-3 py-1 rounded-full">BRONZE</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Resolution Flowchart -->
-        <div class="bg-surface-container-lowest rounded-lg p-8 shadow-[0_8px_32px_rgba(26,60,110,0.06)] relative overflow-hidden border border-outline-variant/10">
-          <div class="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-            <span class="material-symbols-outlined text-[120px]">account_tree</span>
-          </div>
-          <div class="flex items-center gap-3 mb-8 relative z-10">
-            <span class="material-symbols-outlined text-secondary">schema</span>
-            <h3 class="text-xl font-bold text-primary">Resolution Flow</h3>
-          </div>
-          <div class="flex flex-col items-center gap-4 relative z-10">
-            <div class="w-full h-px bg-outline-variant/20 absolute top-1/2 -translate-y-1/2 left-0 hidden md:block"></div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full relative z-10">
-              <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center gap-2">
-                <div class="w-10 h-10 rounded-full bg-error text-white flex items-center justify-center font-bold shadow-md">1</div>
-                <span class="text-xs font-bold text-primary uppercase">Conflict Trigger</span>
-                <p class="text-[10px] text-slate-500">Overlap system detection based on time/room</p>
-              </div>
-              <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center gap-2">
-                <div class="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-bold shadow-md">2</div>
-                <span class="text-xs font-bold text-primary uppercase">Priority Check</span>
-                <p class="text-[10px] text-slate-500">Automated rank comparison between units</p>
-              </div>
-              <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center gap-2">
-                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold shadow-md">3</div>
-                <span class="text-xs font-bold text-primary uppercase">Final Verdict</span>
-                <p class="text-[10px] text-slate-500">Admin override or suggested reschedule</p>
-              </div>
-            </div>
-            <div class="mt-4 p-4 bg-primary text-white rounded-xl w-full text-center shadow-lg">
-              <span class="text-xs font-bold tracking-widest uppercase">Resolution System Active</span>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
 
   </div>

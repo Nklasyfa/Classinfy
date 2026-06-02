@@ -34,7 +34,7 @@
             <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
               <span class="material-symbols-outlined text-[#1A3C6E] text-xl">calendar_month</span>
             </div>
-            <a class="text-[#1A3C6E] font-bold text-xs hover:underline cursor-pointer">Lihat →</a>
+
           </div>
           <p class="text-slate-400 font-medium text-xs mb-1">Jadwal Hari Ini</p>
           <div class="flex items-baseline gap-1">
@@ -49,7 +49,7 @@
             <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center">
               <span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>
             </div>
-            <a class="text-[#1A3C6E] font-bold text-xs hover:underline cursor-pointer">Lihat →</a>
+
           </div>
           <p class="text-slate-400 font-medium text-xs mb-1">Sudah Dipakai</p>
           <div class="flex items-baseline gap-1">
@@ -65,7 +65,7 @@
             <div class="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center">
               <span class="material-symbols-outlined text-orange-500 text-xl">warning</span>
             </div>
-            <a class="text-orange-500 font-bold text-xs hover:underline cursor-pointer">Update →</a>
+
           </div>
           <p class="text-slate-400 font-medium text-xs mb-1">Perlu Update</p>
           <div class="flex items-baseline gap-1">
@@ -175,9 +175,7 @@
             <span class="material-symbols-outlined text-[#1A3C6E] text-xl">history</span>
             <h2 class="text-base font-extrabold text-[#1A3C6E] tracking-tight">Riwayat Perubahan Status</h2>
           </div>
-          <a class="text-[#1A3C6E] font-bold text-xs hover:underline cursor-pointer flex items-center gap-1">
-            Lihat Riwayat Lengkap <span class="material-symbols-outlined text-sm">chevron_right</span>
-          </a>
+
         </div>
         <div class="overflow-x-auto px-6 pb-4">
           <table class="w-full text-left min-w-[560px]">
@@ -283,8 +281,17 @@ const formatActivity = (activity) => {
 const currentDayNum = new Date().getDay()
 
 const filteredSchedules = computed(() => {
-  if (filterType.value === 'today') return schedules.value.filter(s => s.dayOfWeek === currentDayNum)
-  return schedules.value
+  let result = schedules.value;
+  if (filterType.value === 'today') {
+    result = schedules.value.filter(s => s.dayOfWeek === currentDayNum);
+  }
+  
+  // Sort by Kelas in ascending order (e.g. 2024A, 2024B, 2025A)
+  return result.slice().sort((a, b) => {
+    const classA = formatActivity(a.activity).kelas || '';
+    const classB = formatActivity(b.activity).kelas || '';
+    return classA.localeCompare(classB);
+  });
 })
 
 const todaySchedulesCount = computed(() => schedules.value.filter(s => s.dayOfWeek === currentDayNum).length)

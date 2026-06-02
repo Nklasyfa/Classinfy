@@ -157,10 +157,7 @@
             </div>
           </div>
 
-          <!-- Forgot password (Login only) -->
-          <div v-if="isLogin" class="flex justify-end">
-            <a class="text-sm font-bold text-secondary hover:text-primary transition-colors cursor-pointer">Lupa password?</a>
-          </div>
+
 
           <!-- Submit -->
           <button

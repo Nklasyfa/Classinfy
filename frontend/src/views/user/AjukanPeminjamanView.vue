@@ -466,7 +466,16 @@ const checkConflict = async () => {
 }
 
 watch(() => [form.value.roomId, form.value.bookingDate, form.value.startTime, form.value.endTime], () => {
+  if (form.value.startTime && form.value.startTime > '21:00') {
+    form.value.startTime = '21:00'
+  }
+  if (form.value.endTime && form.value.endTime > '21:00') {
+    form.value.endTime = '21:00'
+  }
   if(form.value.startTime && form.value.endTime && form.value.startTime >= form.value.endTime) {
+    if (form.value.startTime === '21:00') {
+      form.value.startTime = '20:00'
+    }
     form.value.endTime = `${String(Number(form.value.startTime.split(':')[0]) + 1).padStart(2,'0')}:00`
   }
   checkConflict()
@@ -495,6 +504,17 @@ const handleSubmit = async () => {
   if (cleanedWA.length < 9 || cleanedWA.length > 13) {
     return alert('Format nomor WhatsApp salah. Masukkan nomor yang valid (9-13 digit setelah kode negara).')
   }
+
+  // Time boundaries validation (Max 9 PM / 21:00)
+  if (form.value.startTime > '21:00' || form.value.endTime > '21:00') {
+    return alert('Batas waktu peminjaman maksimal adalah jam 09:00 malam (21:00 WIB).')
+  }
+
+  // File requirement validation
+  if (!uploadedFile.value) {
+    return alert('Dokumen proposal/surat izin wajib dilampirkan.')
+  }
+
   isSubmitting.value = true
   
   try {
@@ -506,9 +526,7 @@ const handleSubmit = async () => {
     formData.append('endTime', form.value.endTime);
     formData.append('purpose', purposeString);
     formData.append('activityWeight', form.value.activityWeight);
-    if (uploadedFile.value) {
-      formData.append('attachment', uploadedFile.value);
-    }
+    formData.append('attachment', uploadedFile.value);
     
     await axios.post(`${API_URL}/api/bookings`, formData, { headers: authStore.getAuthHeaders() })
     alert('Permohonan berhasil diajukan! Anda dapat memantau status pada Dashboard Anda.')
