@@ -1,4 +1,4 @@
-const { Message, User } = require('../../models');
+const { Message, User, Notification } = require('../../models');
 
 // GET /api/chat/:userId?
 // Untuk User biasa, akan mengambil pesannya sendiri.
@@ -24,13 +24,22 @@ exports.getMessages = async (req, res) => {
         for (let m of messages) {
           if (!seen.has(m.userId)) {
             seen.add(m.userId);
+            
+            const count = await Message.count({
+              where: {
+                userId: m.userId,
+                senderId: m.userId,
+                isRead: false
+              }
+            });
+
             conversations.push({
               userId: m.userId,
               username: m.user ? m.user.username : 'Unknown',
               profilePicture: m.user ? m.user.profilePicture : null,
               lastMessage: m.text,
               time: m.createdAt,
-              unreadCount: 0 // Simplifikasi
+              unreadCount: count
             });
           }
         }
@@ -52,6 +61,40 @@ exports.getMessages = async (req, res) => {
           where: { 
             userId: targetUserId,
             senderId: { [Op.ne]: authUser.id },
+            isRead: false
+          }
+        }
+      );
+    }
+
+    // Tandai notifikasi chat sebagai dibaca
+    if (authUser.roleId == 1) {
+      // Admin membaca chat dari targetUserId
+      const targetUser = await User.findByPk(targetUserId);
+      if (targetUser) {
+        await Notification.update(
+          { isRead: true },
+          {
+            where: {
+              userId: authUser.id,
+              title: 'Pesan Chat Masuk',
+              [Op.or]: [
+                { message: { [Op.iLike]: `%${targetUser.username}%` } },
+                { message: { [Op.iLike]: `%dari User:%` } }
+              ],
+              isRead: false
+            }
+          }
+        );
+      }
+    } else {
+      // User membaca chat dari Admin
+      await Notification.update(
+        { isRead: true },
+        {
+          where: {
+            userId: authUser.id,
+            title: 'Pesan Baru dari Admin',
             isRead: false
           }
         }
@@ -86,6 +129,9 @@ exports.sendMessage = async (req, res) => {
       text: text
     });
 
+    const senderUser = await User.findByPk(authUser.id);
+    const senderName = senderUser ? senderUser.username : 'User';
+
     // Integrasi Notifikasi: Buat notifikasi untuk penerima
     const { Notification } = require('../../models');
     
@@ -104,7 +150,7 @@ exports.sendMessage = async (req, res) => {
         await Notification.create({
           userId: admin.id,
           title: 'Pesan Chat Masuk',
-          message: `Pesan baru dari ${authUser.username || 'User'}: "${text.substring(0, 50) + (text.length > 50 ? '...' : '')}"`,
+          message: `Pesan baru dari ${senderName}: "${text.substring(0, 50) + (text.length > 50 ? '...' : '')}"`,
           type: 'chat'
         });
       }

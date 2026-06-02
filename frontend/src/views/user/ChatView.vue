@@ -62,9 +62,12 @@ const formatTime = (dateStr) => {
 
 const fetchMessages = async () => {
   try {
-    if (isAdmin.value && !selectedUserId.value) {
+    if (isAdmin.value) {
       const res = await axios.get(`${API_URL}/api/chat`, { headers: authStore.getAuthHeaders() })
       conversations.value = res.data.data || []
+    }
+
+    if (isAdmin.value && !selectedUserId.value) {
       return
     }
 
@@ -87,6 +90,7 @@ const fetchMessages = async () => {
     if (isNewMessage) {
       await scrollBottom()
     }
+    window.dispatchEvent(new CustomEvent('refresh-notifications'))
   } catch (error) {
     console.error('Failed fetching chat', error)
   }
@@ -96,6 +100,7 @@ const selectConversation = async (conv) => {
   selectedUserId.value = conv.userId
   selectedUserName.value = conv.username
   selectedUserProfilePic.value = conv.profilePicture
+  conv.unreadCount = 0
   await fetchMessages()
   await scrollBottom()
 }
@@ -183,7 +188,12 @@ const scrollBottom = async () => {
               </div>
               <span class="text-[10px] font-semibold text-slate-400 shrink-0">{{ formatTime(conv.time) }}</span>
             </div>
-            <p class="text-xs text-slate-500 truncate">{{ conv.lastMessage }}</p>
+            <div class="flex justify-between items-center">
+              <p class="text-xs text-slate-500 truncate mr-2">{{ conv.lastMessage }}</p>
+              <span v-if="conv.unreadCount > 0" class="bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center shrink-0">
+                {{ conv.unreadCount }}
+              </span>
+            </div>
           </div>
         </div>
       </div>

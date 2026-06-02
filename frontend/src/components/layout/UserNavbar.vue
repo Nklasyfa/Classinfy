@@ -247,10 +247,12 @@ onMounted(() => {
   fetchNotifications()
   pollInterval = setInterval(fetchNotifications, 5000)
   document.addEventListener('click', closeDropdowns)
+  window.addEventListener('refresh-notifications', fetchNotifications)
 })
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
   document.removeEventListener('click', closeDropdowns)
+  window.removeEventListener('refresh-notifications', fetchNotifications)
 })
 </script>

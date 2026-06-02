@@ -125,6 +125,7 @@ const markRead = async (id) => {
     await axios.patch(`${API_URL}/api/notifications/${id}/read`, {}, { headers: authStore.getAuthHeaders() })
     const notif = notifications.value.find(n => n.id === id)
     if (notif) notif.isRead = true
+    window.dispatchEvent(new CustomEvent('refresh-notifications'))
   } catch (error) {
     console.error('Failed marking notification as read', error)
   }
@@ -134,6 +135,7 @@ const markAllRead = async () => {
   try {
     await axios.patch(`${API_URL}/api/notifications/read-all`, {}, { headers: authStore.getAuthHeaders() })
     notifications.value.forEach(n => n.isRead = true)
+    window.dispatchEvent(new CustomEvent('refresh-notifications'))
   } catch (error) {
     console.error('Failed marking all as read', error)
   }

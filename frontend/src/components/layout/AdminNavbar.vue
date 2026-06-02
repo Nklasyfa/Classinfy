@@ -59,11 +59,13 @@ onMounted(() => {
   fetchNotifications()
   pollInterval = setInterval(fetchNotifications, 5000)
   document.addEventListener('click', closeDropdowns)
+  window.addEventListener('refresh-notifications', fetchNotifications)
 })
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
   document.removeEventListener('click', closeDropdowns)
+  window.removeEventListener('refresh-notifications', fetchNotifications)
 })
 </script>
 
@@ -132,11 +134,7 @@ onUnmounted(() => {
               <p class="text-xs text-slate-500 truncate">{{ authStore.user?.email }}</p>
             </div>
             <div class="p-2">
-              <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-3 font-medium">
-                <span class="material-symbols-outlined text-[18px]">person</span>
-                Profil Settings
-              </button>
-              <button @click="logout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3 font-medium mt-1">
+              <button @click="logout" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3 font-medium">
                 <span class="material-symbols-outlined text-[18px]">logout</span>
                 Logout
               </button>
