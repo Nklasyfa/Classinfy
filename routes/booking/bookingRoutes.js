@@ -9,8 +9,9 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = path.join(__dirname, '../../public/uploads/');
-    if (!fs.existsSync(dir)) {
+    const isVercel = process.env.VERCEL;
+    const dir = isVercel ? '/tmp' : path.join(__dirname, '../../public/uploads/');
+    if (!isVercel && !fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     cb(null, dir);
