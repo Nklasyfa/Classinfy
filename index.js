@@ -29,6 +29,7 @@ app.use('/api', bookingRoutes);
 app.use('/api', monitoringRoutes); // Public - tanpa auth
 app.use('/api', require('./routes/user/userRoutes'));
 app.use('/api', require('./routes/akademik/akademikRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api', chatRoutes);
 
 // Root endpoint
@@ -149,6 +150,9 @@ if (!process.env.VERCEL) {
         'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "prodiId" INTEGER REFERENCES "Prodis"("id") ON UPDATE CASCADE ON DELETE SET NULL'
       );
       await sequelize.query(
+        'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "profilePicture" VARCHAR(255)'
+      );
+      await sequelize.query(
         'ALTER TABLE "Users" ADD COLUMN IF NOT EXISTS "matkulId" INTEGER REFERENCES "Matkuls"("id") ON UPDATE CASCADE ON DELETE SET NULL'
       );
       
@@ -182,6 +186,9 @@ if (!process.env.VERCEL) {
       // Booking: attachmentUrl
       await sequelize.query(
         'ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "attachmentUrl" VARCHAR(255)'
+      );
+      await sequelize.query(
+        'ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "adminAttachmentUrl" VARCHAR(255)'
       );
 
       // UserMatkuls join table for many-to-many User and Matkul

@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, Role, Matkul, Kelas, Schedule, sequelize } = require('../../models');
+const { User, Role, Matkul, Kelas, Schedule, Prodi, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 
 // ==================== REGISTER ====================
@@ -70,7 +70,10 @@ exports.register = async (req, res) => {
     // Ambil user beserta role-nya
     const userWithRole = await User.findByPk(newUser.id, {
       attributes: { exclude: ['password'] },
-      include: [{ model: Role, as: 'role', attributes: ['id', 'name'] }],
+      include: [
+        { model: Role, as: 'role', attributes: ['id', 'name'] },
+        { model: Prodi, as: 'prodi', attributes: ['id', 'code', 'name'] }
+      ],
     });
 
     res.status(201).json({
@@ -96,7 +99,10 @@ exports.login = async (req, res) => {
     // Cari user beserta role
     const user = await User.findOne({
       where: { email },
-      include: [{ model: Role, as: 'role', attributes: ['id', 'name'] }],
+      include: [
+        { model: Role, as: 'role', attributes: ['id', 'name'] },
+        { model: Prodi, as: 'prodi', attributes: ['id', 'code', 'name'] }
+      ],
     });
     if (!user) {
       return res.status(401).json({ message: 'Email atau password salah' });
@@ -130,12 +136,15 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        roleId: user.roleId,
         role: user.role,
+        profilePicture: user.profilePicture,
+        prodi: user.prodi,
       },
     });
   } catch (error) {
-    console.error('Error saat login:', error);
-    res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+    console.error('Error saat login:', error, error.stack);
+    res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message });
   }
 };
 
@@ -144,7 +153,10 @@ exports.getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] },
-      include: [{ model: Role, as: 'role', attributes: ['id', 'name'] }],
+      include: [
+        { model: Role, as: 'role', attributes: ['id', 'name'] },
+        { model: Prodi, as: 'prodi', attributes: ['id', 'code', 'name'] }
+      ],
     });
 
     if (!user) {
@@ -158,5 +170,28 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error('Error saat get profile:', error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
+  }
+};
+
+// ==================== UPLOAD PROFILE PICTURE ====================
+exports.uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Tidak ada file yang diunggah' });
+    }
+    
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User tidak ditemukan' });
+    }
+    
+    const profilePictureUrl = `/uploads/profiles/${req.file.filename}`;
+    user.profilePicture = profilePictureUrl;
+    await user.save();
+    
+    res.json({ success: true, message: 'Foto profil berhasil diperbarui', profilePicture: profilePictureUrl });
+  } catch (error) {
+    console.error('Upload profile picture error:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

@@ -14,7 +14,7 @@ exports.getMessages = async (req, res) => {
       } else {
         // Jika admin tidak specify userId, kembalikan daftar user yang pernah chat
         const messages = await Message.findAll({
-          include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email'] }],
+          include: [{ model: User, as: 'user', attributes: ['id', 'username', 'email', 'profilePicture'] }],
           order: [['createdAt', 'DESC']]
         });
         
@@ -27,6 +27,7 @@ exports.getMessages = async (req, res) => {
             conversations.push({
               userId: m.userId,
               username: m.user ? m.user.username : 'Unknown',
+              profilePicture: m.user ? m.user.profilePicture : null,
               lastMessage: m.text,
               time: m.createdAt,
               unreadCount: 0 // Simplifikasi
@@ -41,6 +42,21 @@ exports.getMessages = async (req, res) => {
       where: { userId: targetUserId },
       order: [['createdAt', 'ASC']]
     });
+
+    // Mark messages as read if sent by the other party
+    const { Op } = require('sequelize');
+    if (messages.length > 0) {
+      await Message.update(
+        { isRead: true },
+        { 
+          where: { 
+            userId: targetUserId,
+            senderId: { [Op.ne]: authUser.id },
+            isRead: false
+          }
+        }
+      );
+    }
 
     res.status(200).json({ data: messages });
   } catch (error) {
@@ -69,6 +85,22 @@ exports.sendMessage = async (req, res) => {
       senderId: authUser.id,
       text: text
     });
+
+    // Integrasi Notifikasi: Buat notifikasi untuk penerima
+    const { Notification } = require('../../models');
+    
+    // Jika sender adalah Admin, berarti notifikasi untuk User
+    if (authUser.roleId == 1 && targetUserId) {
+      await Notification.create({
+        userId: targetUserId,
+        title: 'Pesan Baru dari Admin',
+        message: 'Anda menerima pesan baru di Live Chat: ' + text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+        type: 'chat'
+      });
+    } 
+    // Jika sender adalah User, dan kita anggap ada user admin yang stand-by, 
+    // kita bisa men-skip karena admin melihat semua dari dashboard, atau jika mau di-broadcast bisa ditambahkan logika untuk mencari Admin ID.
+    // Tapi untuk saat ini kita hanya notify user jika admin membalas.
 
     res.status(201).json({ data: message });
   } catch (error) {

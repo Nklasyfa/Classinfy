@@ -53,7 +53,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-outline-variant/10">
-              <tr v-for="booking in filteredBookings" :key="booking.id" :class="getRowClass(booking.status)">
+              <tr v-for="booking in paginatedBookings" :key="booking.id" :class="getRowClass(booking.status)">
                 <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-900 font-extrabold' : 'text-slate-700'">{{ booking.user?.username || 'Anonim' }}</td>
                 <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-900 font-bold' : 'text-slate-700'">{{ booking.room?.name || '-' }}</td>
                 <td class="px-6 py-4 text-xs font-medium" :class="booking.status === 'needs_negotiation' ? 'text-red-700' : 'text-slate-500'">{{ formatDate(booking.bookingDate) }}, {{ booking.startTime.slice(0,5) }} - {{ booking.endTime.slice(0,5) }}</td>
@@ -74,7 +74,12 @@
         
         <!-- Pagination Metadata -->
         <div v-if="filteredBookings.length > 0" class="bg-surface-container-low px-8 py-5 flex items-center justify-between border-t border-slate-200">
-          <div class="text-xs text-on-surface-variant font-medium">Menampilkan {{ filteredBookings.length }} Data Permohonan</div>
+          <div class="text-xs text-on-surface-variant font-medium">Menampilkan {{ paginatedBookings.length }} dari {{ filteredBookings.length }} Data Permohonan</div>
+          <div class="flex gap-1">
+            <button @click="currentPage--" :disabled="currentPage===1" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50 cursor-pointer transition-colors"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>
+            <span class="px-3 py-1.5 text-xs font-bold text-primary border border-primary/20 bg-primary/5 rounded-lg">{{ currentPage }} / {{ totalPages }}</span>
+            <button @click="currentPage++" :disabled="currentPage===totalPages" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50 cursor-pointer transition-colors"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>
+          </div>
         </div>
       </section>
     </main>
@@ -97,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
@@ -112,6 +117,12 @@ const bookings = ref([])
 const isLoading = ref(true)
 const activeTab = ref('Semua')
 const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+watch([activeTab, searchQuery], () => {
+  currentPage.value = 1
+})
 
 const fetchBookings = async () => {
   try {
@@ -142,6 +153,13 @@ const filteredBookings = computed(() => {
     )
   }
   return res
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredBookings.value.length / itemsPerPage)))
+
+const paginatedBookings = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return filteredBookings.value.slice(start, start + itemsPerPage)
 })
 
 const pendingCount = computed(() => bookings.value.filter(b => b.status === 'pending').length)

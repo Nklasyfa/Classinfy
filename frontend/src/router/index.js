@@ -13,6 +13,7 @@ import DashboardPjView from '../views/user/DashboardPjView.vue'
 import AjukanPeminjamanView from '../views/user/AjukanPeminjamanView.vue'
 import NotifikasiView from '../views/user/NotifikasiView.vue'
 import ChatView from '../views/user/ChatView.vue'
+import RiwayatPeminjamanView from '../views/user/RiwayatPeminjamanView.vue'
 
 // Admin
 import DashboardAdminView from '../views/admin/DashboardAdminView.vue'
@@ -68,6 +69,12 @@ const router = createRouter({
       path: '/chat',
       name: 'chat',
       component: ChatView,
+      meta: { requiresAuth: true, roles: [1, 2, 3, 4] },
+    },
+    {
+      path: '/riwayat',
+      name: 'riwayat',
+      component: RiwayatPeminjamanView,
       meta: { requiresAuth: true, roles: [1, 2, 3, 4] },
     },
     {

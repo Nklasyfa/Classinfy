@@ -7,6 +7,7 @@ const Booking = require('./definitions/Booking');
 const ScheduleLog = require('./definitions/ScheduleLog');
 const BookingLog = require('./definitions/BookingLog');
 const Message = require('./definitions/Message');
+const Notification = require('./definitions/Notification');
 
 // ==================== Associations ====================
 
@@ -77,6 +78,10 @@ Message.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' });
 Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
+// Notifications: User <-> Notification
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // ==================== Seed Functions ====================
 
 const seedRoles = async () => {
@@ -110,5 +115,6 @@ module.exports = {
   Matkul,
   Kelas,
   Message,
+  Notification,
   seedRoles,
 };

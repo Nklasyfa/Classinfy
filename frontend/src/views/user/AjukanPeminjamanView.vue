@@ -3,41 +3,7 @@
     <!-- Background Grid -->
     <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
 
-    <!-- TopNavBar -->
-    <header class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[900px] h-[64px] px-6 flex items-center justify-between z-50 bg-white/80 backdrop-blur-md rounded-full mt-4 shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-slate-100">
-      <div class="flex items-center gap-6">
-        <span class="text-2xl font-extrabold text-primary-container tracking-tighter flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>
-          CLASSINFY
-        </span>
-        <div class="hidden md:flex items-center gap-2 text-sm font-medium text-slate-500">
-          <router-link to="/" class="text-primary-container px-3 py-1.5 hover:scale-105 transition-transform duration-200 cursor-pointer">Monitoring</router-link>
-          <span class="material-symbols-outlined text-xs text-primary-container/50">chevron_right</span>
-          <span class="bg-primary-container text-white rounded-full px-4 py-1.5 font-bold">Ajukan Peminjaman</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <!-- Jika sudah login -->
-        <template v-if="authStore.isAuthenticated">
-          <!-- Notification Icon -->
-          <router-link to="/notifikasi" class="relative p-2 text-slate-500 hover:text-primary transition-colors cursor-pointer hidden sm:block" title="Notifikasi">
-            <span class="material-symbols-outlined text-xl">notifications</span>
-            <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ unreadCount }}</span>
-          </router-link>
-          <div class="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-full cursor-pointer hover:bg-surface-container-high transition-colors" @click="router.push('/dashboard')">
-            <div class="w-7 h-7 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-bold">{{ initials }}</div>
-            <span class="text-sm font-semibold text-primary hidden sm:block">{{ authStore.user?.username || 'User' }}</span>
-          </div>
-          <button @click="handleLogout" class="text-slate-500 hover:text-red-600 transition-colors p-1 cursor-pointer" title="Logout">
-            <span class="material-symbols-outlined text-xl">logout</span>
-          </button>
-        </template>
-        <!-- Jika belum login -->
-        <template v-else>
-          <button @click="router.push('/auth/login')" class="bg-primary text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-primary/90 transition-colors cursor-pointer">Login</button>
-        </template>
-      </div>
-    </header>
+    <UserNavbar />
 
     <main class="pt-32 pb-24 px-4 max-w-[900px] mx-auto relative z-10">
       <!-- Header -->
@@ -208,12 +174,11 @@
               </button>
             </div>
           </div>
-          <div class="space-y-2">
+          <div class="space-y-2 opacity-80">
             <label class="block text-sm font-bold text-primary px-1">Jurusan / Prodi<span class="text-error">*</span></label>
-            <select v-model="form.jurusan" class="w-full h-14 bg-surface-container-low border-none rounded-[12px] px-5 font-medium text-on-surface focus:ring-2 focus:ring-primary-fixed-dim outline-none cursor-pointer appearance-none">
-              <option value="">Pilih Jurusan...</option>
-              <option v-for="p in prodis" :key="p.id" :value="p.name">{{ p.name }}</option>
-            </select>
+            <div class="h-14 bg-slate-200/50 rounded-[12px] px-5 flex items-center text-slate-600 font-bold border border-slate-200 cursor-not-allowed">
+              {{ form.jurusan || 'Tidak Ada Prodi (Silakan hubungi Admin)' }}
+            </div>
           </div>
         </div>
 
@@ -238,7 +203,17 @@
 
         <!-- Lampiran -->
         <div class="space-y-2">
-          <label class="block text-sm font-bold text-primary px-1">Lampiran (Proposal/Surat Izin)</label>
+          <div class="flex justify-between items-center px-1">
+            <label class="block text-sm font-bold text-primary">Lampiran (Proposal/Surat Izin)</label>
+            <a 
+              href="https://docs.google.com/document/d/1FQ6nvWvd6IeXjMnQ2LjnhUd3PFgdVoAh/edit" 
+              target="_blank" 
+              class="text-xs font-bold text-[#1A3C6E] hover:underline flex items-center gap-1 bg-[#1A3C6E]/5 px-2.5 py-1 rounded-full cursor-pointer transition-all hover:bg-[#1A3C6E]/10"
+            >
+              <span class="material-symbols-outlined text-[14px]">download</span>
+              Unduh Template Surat Izin
+            </a>
+          </div>
           <div class="group relative border-2 border-dashed border-outline-variant rounded-[12px] p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low hover:bg-surface-container-high hover:border-primary transition-all cursor-pointer">
             <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm group-hover:scale-110 transition-transform">
               <span class="material-symbols-outlined" :class="uploadedFile ? 'text-green-600' : 'text-primary'">{{ uploadedFile ? 'check_circle' : 'cloud_upload' }}</span>
@@ -277,8 +252,12 @@
         <div class="p-6 space-y-6">
           <div>
             <label class="block text-sm font-bold text-primary mb-2">Pilih Ruangan</label>
-            <select v-model="form.roomId" class="w-full h-12 bg-surface-container-low border-none rounded-xl px-4 font-medium text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-              <option v-for="room in rooms" :key="room.id" :value="room.id">
+            <div class="relative mb-2">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+              <input v-model="roomSearchQuery" type="text" placeholder="Cari kode atau nama ruangan..." class="w-full h-10 bg-white border border-slate-200 rounded-lg pl-9 pr-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
+            </div>
+            <select v-model="form.roomId" class="w-full h-12 bg-surface-container-low border-none rounded-xl px-4 font-medium text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer" size="4" style="height: auto;">
+              <option v-for="room in filteredRooms" :key="room.id" :value="room.id" class="p-2 hover:bg-white rounded cursor-pointer">
                 {{ room.code }} - {{ room.name }} (Kap: {{ room.capacity }})
               </option>
             </select>
@@ -326,13 +305,24 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
+import UserNavbar from '../../components/layout/UserNavbar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 // Data
+const roomSearchQuery = ref('')
 const rooms = ref([])
+const filteredRooms = computed(() => {
+  if (!roomSearchQuery.value) return rooms.value;
+  const q = roomSearchQuery.value.toLowerCase();
+  return rooms.value.filter(r => 
+    r.name.toLowerCase().includes(q) || 
+    r.code.toLowerCase().includes(q)
+  );
+})
+
 const showDropdown = ref(false)
 const showModal = ref(false)
 const participantCount = ref(40)
@@ -492,13 +482,23 @@ const handleSubmit = async () => {
   if (!form.value.jurusan) {
     return alert('Jurusan/Prodi harus dipilih.')
   }
-  if (!whatsappNumber.value.trim()) {
+  const waRaw = whatsappNumber.value.trim()
+  if (!waRaw) {
     return alert('Nomor kontak WhatsApp harus diisi.')
+  }
+  let cleanedWA = waRaw.replace(/\D/g, '')
+  if (cleanedWA.startsWith('0')) {
+    cleanedWA = cleanedWA.substring(1)
+  } else if (cleanedWA.startsWith('62')) {
+    cleanedWA = cleanedWA.substring(2)
+  }
+  if (cleanedWA.length < 9 || cleanedWA.length > 13) {
+    return alert('Format nomor WhatsApp salah. Masukkan nomor yang valid (9-13 digit setelah kode negara).')
   }
   isSubmitting.value = true
   
   try {
-    const purposeString = `${form.value.eventName} | Jurusan: ${form.value.jurusan} | Peserta: ${participantCount.value} orang | WA: +62${whatsappNumber.value} | Alasan: ${form.value.purpose}`
+    const purposeString = `${form.value.eventName} | Jurusan: ${form.value.jurusan} | Peserta: ${participantCount.value} orang | WA: +62${cleanedWA} | Alasan: ${form.value.purpose}`
     const formData = new FormData();
     formData.append('roomId', form.value.roomId);
     formData.append('bookingDate', form.value.bookingDate);
@@ -524,7 +524,7 @@ const handleSubmit = async () => {
   }
 }
 
-const unreadCount = ref(2)
+const unreadCount = ref(0)
 
 const handleLogout = () => {
   if (confirm('Apakah Anda yakin ingin keluar?')) {
@@ -533,9 +533,27 @@ const handleLogout = () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (authStore.token) {
+    try {
+      const profileRes = await axios.get(`${API_URL}/api/auth/profile`, {
+        headers: authStore.getAuthHeaders()
+      })
+      if (profileRes.data && profileRes.data.data) {
+        authStore.user = profileRes.data.data
+        localStorage.setItem('user', JSON.stringify(profileRes.data.data))
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile', err)
+    }
+  }
+
   fetchRooms()
   fetchProdis()
+
+  if (authStore.user && authStore.user.prodi) {
+    form.value.jurusan = authStore.user.prodi.name
+  }
 })
 </script>
 

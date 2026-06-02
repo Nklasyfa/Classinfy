@@ -3,15 +3,36 @@ const { Room, Schedule, Booking } = require('../../models');
 // ==================== GET ALL ROOMS ====================
 exports.getAllRooms = async (req, res) => {
   try {
-    const rooms = await Room.findAll({
-      order: [['code', 'ASC']],
-    });
+    const page = req.query.page ? parseInt(req.query.page) : null;
+    const size = req.query.size ? parseInt(req.query.size) : null;
 
-    res.status(200).json({
-      message: 'Berhasil mengambil daftar ruangan',
-      total: rooms.length,
-      data: rooms,
-    });
+    if (page && size) {
+      const limit = size;
+      const offset = (page - 1) * limit;
+      const result = await Room.findAndCountAll({
+        order: [['code', 'ASC']],
+        limit,
+        offset,
+      });
+      return res.status(200).json({
+        message: 'Berhasil mengambil daftar ruangan',
+        totalItems: result.count,
+        totalPages: Math.ceil(result.count / limit),
+        currentPage: page,
+        data: result.rows,
+      });
+    } else {
+      const rooms = await Room.findAll({
+        order: [['code', 'ASC']],
+      });
+      return res.status(200).json({
+        message: 'Berhasil mengambil daftar ruangan',
+        totalItems: rooms.length,
+        totalPages: 1,
+        currentPage: 1,
+        data: rooms,
+      });
+    }
   } catch (error) {
     console.error('Error getAllRooms:', error);
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });

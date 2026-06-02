@@ -279,7 +279,7 @@ const filteredBookings = computed(() => {
       b.purpose?.toLowerCase().includes(q)
     )
   }
-  return res
+  return res.slice(0, 10)
 })
 
 const goToDetail = (id) => {

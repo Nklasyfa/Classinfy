@@ -12,11 +12,21 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const user = computed(() => authStore.user)
 
 const rooms = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const totalPages = ref(1)
+const totalItems = ref(0)
 
 const fetchRooms = async () => {
   try {
-    const res = await axios.get(`${API_URL}/api/rooms`, { headers: authStore.getAuthHeaders() })
-    rooms.value = res.data.data.map(room => ({
+    const res = await axios.get(`${API_URL}/api/rooms`, { 
+      headers: authStore.getAuthHeaders(),
+      params: { page: currentPage.value, size: pageSize.value }
+    })
+    const roomsData = res.data.data || []
+    totalPages.value = res.data.totalPages || 1
+    totalItems.value = res.data.totalItems || 0
+    rooms.value = roomsData.map(room => ({
       id: room.id,
       code: room.code,
       building: room.location || 'Gedung Pendukung',
@@ -31,9 +41,6 @@ const fetchRooms = async () => {
 }
 
 onMounted(() => fetchRooms())
-
-// Pagination dummy state
-const currentPage = ref(1)
 
 // Modal State
 const isAddModalOpen = ref(false)
@@ -232,14 +239,28 @@ const handleLogout = () => {
         
         <!-- Pagination -->
         <div class="bg-surface-container-low/30 px-6 py-4 flex items-center justify-between border-t border-outline-variant/10">
-          <span class="text-xs text-slate-500">Showing {{ rooms.length }} rooms</span>
+          <span class="text-xs text-slate-500">Menampilkan {{ rooms.length }} dari {{ totalItems }} ruangan</span>
           <div class="flex items-center gap-2">
-            <button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer">
+            <button 
+              @click="currentPage > 1 && (currentPage--, fetchRooms())"
+              :disabled="currentPage <= 1"
+              class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer"
+            >
               <span class="material-symbols-outlined text-sm">chevron_left</span>
             </button>
-            <button class="w-8 h-8 rounded-lg bg-primary text-white text-xs font-bold shadow-md cursor-pointer">1</button>
-            <button class="w-8 h-8 rounded-lg hover:bg-white text-xs font-bold transition-colors text-slate-600 border border-transparent shadow-sm cursor-pointer">2</button>
-            <button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer">
+            <button 
+              v-for="p in totalPages" :key="p"
+              @click="currentPage = p; fetchRooms()"
+              :class="currentPage === p ? 'bg-primary text-white font-bold' : 'hover:bg-white text-slate-600 border border-transparent'"
+              class="w-8 h-8 rounded-lg text-xs shadow-sm cursor-pointer transition-colors"
+            >
+              {{ p }}
+            </button>
+            <button 
+              @click="currentPage < totalPages && (currentPage++, fetchRooms())"
+              :disabled="currentPage >= totalPages"
+              class="w-8 h-8 rounded-lg bg-surface-container-lowest text-slate-400 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-sm border border-outline-variant/10 cursor-pointer"
+            >
               <span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>

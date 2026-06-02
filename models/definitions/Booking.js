@@ -67,6 +67,11 @@ const Booking = sequelize.define('Booking', {
     allowNull: true,
     comment: 'URL/path lampiran proposal kegiatan',
   },
+  adminAttachmentUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'URL/path lampiran surat izin/bukti terima dari admin',
+  },
 }, {
   tableName: 'Bookings',
   timestamps: true,

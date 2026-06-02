@@ -33,7 +33,7 @@ router.patch('/bookings/:id/respond-negotiation', verifyToken, bookingController
 // ── Admin-only Routes ────────────────────────────────────────────────
 router.get('/bookings', verifyToken, isAdmin, bookingController.getAllBookings);
 router.get('/bookings/:id', verifyToken, isAdmin, bookingController.getBookingById);
-router.patch('/bookings/:id/status', verifyToken, isAdmin, bookingController.updateBookingStatus);
+router.patch('/bookings/:id/status', verifyToken, isAdmin, upload.single('adminAttachment'), bookingController.updateBookingStatus);
 router.patch('/bookings/:id/negotiate', verifyToken, isAdmin, bookingController.negotiateBooking);
 
 // Sprint 4: Force Override — hak prerogatif admin (bypass conflict)

@@ -64,7 +64,11 @@
                 <div>
                   <p class="text-xs font-label text-slate-400 uppercase tracking-widest mb-1">Pemohon</p>
                   <div class="flex items-center gap-3 mt-2">
-                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold">
+                    <div v-if="booking.user?.profilePicture"
+                         :style="`background-image: url(${API_URL}${booking.user.profilePicture})`"
+                         class="w-10 h-10 rounded-full bg-cover bg-center shadow-inner">
+                    </div>
+                    <div v-else class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold text-sm">
                       {{ booking.user?.username?.substring(0,2).toUpperCase() || 'U' }}
                     </div>
                     <div>
@@ -151,7 +155,7 @@
           <!-- Right Column (40%) -->
           <div class="lg:col-span-4 space-y-8">
             <!-- Action Card -->
-            <div class="bg-surface-container-lowest border-2 border-primary rounded-lg p-6 shadow-xl relative" v-if="['pending', 'needs_negotiation', 'rescheduled'].includes(booking.status)">
+            <div class="bg-surface-container-lowest border-2 border-primary rounded-lg p-6 shadow-xl relative" v-if="['pending', 'needs_negotiation', 'rescheduled', 'approved'].includes(booking.status)">
               <div class="absolute -top-4 left-6 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold">⚡ Tindakan Admin</div>
               <h3 class="text-lg font-bold text-primary mb-4 mt-2">Keputusan Akhir</h3>
               <div class="space-y-4">
@@ -160,20 +164,24 @@
                   <textarea v-model="adminNotes" class="w-full bg-surface-container-low border-0 rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 min-h-[120px] outline-none" placeholder="Berikan alasan penolakan atau pesan negosiasi (khusus Nego/Reject)..."></textarea>
                 </div>
                 <div class="grid grid-cols-1 gap-3 pt-4">
-                  <button @click="updateStatus('approved')" :disabled="isProcessing" class="w-full bg-[#16A34A] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
+                  <button v-if="booking.status !== 'approved'" @click="updateStatus('approved')" :disabled="isProcessing" class="w-full bg-[#16A34A] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
                     <span class="material-symbols-outlined">verified</span>
                     Approve Request
                   </button>
-                  <button @click="updateStatus('rejected')" :disabled="isProcessing" class="w-full bg-[#DC2626] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
+                  <button v-if="booking.status !== 'approved'" @click="updateStatus('rejected')" :disabled="isProcessing" class="w-full bg-[#DC2626] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
                     <span class="material-symbols-outlined">cancel</span>
                     Reject Request
+                  </button>
+                  <button v-if="booking.status === 'approved'" @click="updateStatus('cancelled')" :disabled="isProcessing" class="w-full bg-[#9CA3AF] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
+                    <span class="material-symbols-outlined">block</span>
+                    Batalkan Peminjaman (Cancel)
                   </button>
                   <button v-if="booking.status === 'pending'" @click="negotiate()" :disabled="isProcessing" class="w-full bg-[#7C3AED] text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer">
                     <span class="material-symbols-outlined">forum</span>
                     Negotiate (Nego)
                   </button>
                   <!-- FORCE OVERRIDE: tombol merah — hak prerogatif Admin -->
-                  <div class="border-t border-red-100 pt-3 mt-1">
+                  <div class="border-t border-red-100 pt-3 mt-1" v-if="booking.status !== 'approved'">
                     <button @click="handleForceOverride()" :disabled="isProcessing" class="w-full bg-gradient-to-r from-red-600 to-rose-700 text-white py-3 rounded-full font-black flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-red-200 border border-red-500">
                       <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
                       Force Override (Bypass Konflik)
@@ -302,8 +310,8 @@ const fetchBookingDetail = async () => {
 }
 
 const updateStatus = async (status) => {
-  if (status === 'rejected' && (!adminNotes.value || adminNotes.value.trim() === '')) {
-    return alert('Harap berikan Catatan Peninjauan mengapa permohonan ini ditolak.')
+  if ((status === 'rejected' || status === 'cancelled') && (!adminNotes.value || adminNotes.value.trim() === '')) {
+    return alert(`Harap berikan Catatan Peninjauan mengapa permohonan ini di-${status}.`)
   }
   if (!confirm(`Apakah Anda yakin ingin memproses status ini menjadi: ${status.toUpperCase()}?`)) return;
 

@@ -63,6 +63,14 @@ const updateRole = async (userId, roleId) => {
 }
 
 const showModal = ref(false)
+const showDetailModal = ref(false)
+const selectedUser = ref(null)
+
+const openDetailModal = (user) => {
+  selectedUser.value = user
+  showDetailModal.value = true
+}
+
 const newUser = ref({
   username: '',
   email: '',
@@ -190,7 +198,11 @@ onMounted(() => {
             <tr v-else v-for="user in filteredUsers" :key="user.id" class="hover:bg-slate-50/50 transition-colors group">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-primary font-bold text-xs shadow-inner group-hover:bg-white transition-colors">
+                  <div v-if="user.profilePicture" 
+                       :style="`background-image: url(${API_URL}${user.profilePicture})`"
+                       class="w-8 h-8 rounded-full bg-cover bg-center shadow-inner group-hover:opacity-90 transition-opacity">
+                  </div>
+                  <div v-else class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-primary font-bold text-xs shadow-inner group-hover:bg-white transition-colors">
                     {{ user.username.charAt(0).toUpperCase() }}
                   </div>
                   <div>
@@ -238,6 +250,9 @@ onMounted(() => {
                           :class="user.isVerified ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'"
                           class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer border border-transparent hover:border-current/20">
                     {{ user.isVerified ? 'Suspend' : 'Verify' }}
+                  </button>
+                  <button @click="openDetailModal(user)" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer" title="Detail User">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>
                   </button>
                   <button @click="deleteUser(user.id)" class="p-1.5 text-error hover:bg-error/10 rounded-lg transition-colors cursor-pointer" title="Hapus User">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
@@ -288,6 +303,128 @@ onMounted(() => {
             <button type="submit" class="px-5 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:scale-105 transition-transform shadow-md">Simpan User</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- User Detail Modal (Dari HTML yang Diberikan) -->
+    <div v-if="showDetailModal && selectedUser" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div class="bg-surface-container-lowest w-full max-w-[640px] rounded-lg shadow-[0_8px_32px_rgba(26,60,110,0.12)] overflow-hidden flex flex-col relative">
+        <button @click="showDetailModal = false" class="absolute top-6 right-6 p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+        
+        <div class="px-8 pt-8 pb-6 space-y-1">
+          <h2 class="text-2xl font-extrabold text-primary tracking-tight">Kelola Pengguna</h2>
+          <div class="flex items-center gap-2">
+            <span class="text-on-surface-variant font-medium">ID Pengguna:</span>
+            <span class="text-secondary font-bold font-label text-xs tracking-wider uppercase bg-secondary-fixed px-2 py-0.5 rounded">#{{ selectedUser.id.split('-')[0] }}</span>
+          </div>
+        </div>
+
+        <div class="px-8 pb-10 overflow-y-auto max-h-[716px] space-y-8">
+          
+          <div v-if="!selectedUser.isVerified" class="bg-amber-50 rounded-lg p-6 flex flex-col gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-700">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pending_actions</span>
+              </div>
+              <div>
+                <h3 class="font-bold text-amber-900">Verifikasi Akun Ini</h3>
+                <p class="text-amber-700/80 text-sm">Pengguna ini sedang menunggu peninjauan identitas.</p>
+              </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button @click="deleteUser(selectedUser.id); showDetailModal = false" class="flex-1 bg-surface-container-lowest text-on-surface-variant font-semibold py-2.5 rounded-xl hover:bg-white transition-all active:scale-[0.98]">
+                  Tolak
+              </button>
+              <button @click="toggleVerification(selectedUser)" class="flex-[1.5] bg-gradient-to-r from-primary to-secondary text-white font-bold py-2.5 rounded-full shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                  Verifikasi
+              </button>
+            </div>
+          </div>
+
+          <section class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="h-[1px] flex-1 bg-surface-container-high"></div>
+              <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] font-label">Informasi Profil</span>
+              <div class="h-[1px] flex-1 bg-surface-container-high"></div>
+            </div>
+            <div class="flex gap-6 items-start">
+              <div class="relative group">
+                <div v-if="selectedUser.profilePicture"
+                     :style="`background-image: url(${API_URL}${selectedUser.profilePicture})`"
+                     class="w-24 h-24 rounded-lg bg-cover bg-center shadow-inner border-4 border-surface-container-low">
+                </div>
+                <div v-else class="w-24 h-24 rounded-lg bg-surface-container-low flex items-center justify-center text-primary font-bold text-3xl shadow-inner group-hover:bg-white transition-colors border-4 border-surface-container-low">
+                  {{ selectedUser.username.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="flex-1 grid grid-cols-2 gap-y-4 gap-x-6">
+                <div>
+                  <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label mb-1">Nama Lengkap</label>
+                  <p class="text-on-surface font-semibold">{{ selectedUser.username }}</p>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label mb-1">Status</label>
+                  <span v-if="selectedUser.isVerified" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 font-bold text-[10px] uppercase">
+                      <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Terverifikasi
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 font-bold text-[10px] uppercase">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending
+                  </span>
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest font-label mb-1">Alamat Surel</label>
+                  <p class="text-on-surface font-semibold">{{ selectedUser.email }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="h-[1px] flex-1 bg-surface-container-high"></div>
+              <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] font-label">Pengaturan Akun</span>
+              <div class="h-[1px] flex-1 bg-surface-container-high"></div>
+            </div>
+            <div class="space-y-4">
+              <div class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary-container">shield_person</span>
+                  <div>
+                    <p class="text-sm font-bold text-primary">Peran Pengguna</p>
+                    <p class="text-xs text-on-surface-variant">Level akses sistem saat ini</p>
+                  </div>
+                </div>
+                <span class="font-bold text-primary-container font-label text-sm">{{ selectedUser.role?.name || 'Mahasiswa' }}</span>
+              </div>
+              <div class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary-container">person_check</span>
+                  <div>
+                    <p class="text-sm font-bold text-primary">Status Verifikasi</p>
+                    <p class="text-xs text-on-surface-variant">Izinkan login ke sistem</p>
+                  </div>
+                </div>
+                <button @click="toggleVerification(selectedUser)" class="w-12 h-6 rounded-full relative transition-colors cursor-pointer" :class="selectedUser.isVerified ? 'bg-primary-container' : 'bg-slate-300'">
+                  <div class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all" :class="selectedUser.isVerified ? 'right-1' : 'left-1'"></div>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="px-8 py-6 bg-surface-container-low flex justify-between items-center">
+          <button @click="deleteUser(selectedUser.id); showDetailModal = false" class="flex items-center gap-2 text-error font-bold text-sm hover:underline cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+            Hapus Akun
+          </button>
+          <div class="flex gap-3">
+            <button @click="showDetailModal = false" class="px-6 py-2.5 rounded-xl font-bold text-sm text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer">
+              Tutup
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

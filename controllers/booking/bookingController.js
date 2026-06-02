@@ -268,7 +268,7 @@ exports.updateBookingStatus = async (req, res) => {
       pending: ['approved', 'rejected', 'needs_negotiation'],
       needs_negotiation: ['approved', 'rejected', 'cancelled'],
       rescheduled: ['approved', 'rejected', 'cancelled'],
-      approved: ['cancelled'],
+      approved: ['cancelled', 'rejected'],
     };
 
     const allowed = allowedTransitions[booking.status];
@@ -311,9 +311,38 @@ exports.updateBookingStatus = async (req, res) => {
     const oldStatus = booking.status;
     booking.status = status;
     if ((status === 'rejected' || status === 'cancelled') && rejectionReason) booking.rejectionReason = rejectionReason;
+    
+    if (req.file) {
+      booking.adminAttachmentUrl = '/uploads/' + req.file.filename;
+    }
+
     await booking.save();
 
     await logBookingAction({ bookingId: booking.id, actorId, actorRole, oldStatus, newStatus: status, action: status, notes: rejectionReason || null });
+
+    // CREATE NOTIFICATION FOR THE USER
+    const { Notification } = require('../../models');
+    let notifTitle = '';
+    let notifMessage = '';
+    if (status === 'approved') {
+      notifTitle = 'Peminjaman Disetujui';
+      notifMessage = `Permohonan peminjaman ruangan ${booking.room?.name} pada ${booking.bookingDate} telah disetujui.`;
+      if (booking.adminAttachmentUrl) {
+        notifMessage += ' Admin telah melampirkan surat izin/bukti terima. Silakan cek di Riwayat Peminjaman pada profil Anda.';
+      }
+    } else if (status === 'rejected') {
+      notifTitle = 'Peminjaman Ditolak';
+      notifMessage = `Permohonan peminjaman ruangan ${booking.room?.name} pada ${booking.bookingDate} ditolak. Alasan: ${rejectionReason}`;
+    }
+    
+    if (notifTitle) {
+      await Notification.create({
+        userId: booking.userId,
+        title: notifTitle,
+        message: notifMessage,
+        type: 'system',
+      });
+    }
 
     await booking.reload({ include: withRelations });
     const response = { message: `Booking berhasil di-${status}`, data: booking };
@@ -326,6 +355,7 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
   }
 };
+
 
 // ========== NEGOTIATE BOOKING (Admin → Mahasiswa) ==========
 exports.negotiateBooking = async (req, res) => {

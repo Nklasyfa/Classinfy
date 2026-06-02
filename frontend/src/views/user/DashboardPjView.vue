@@ -3,68 +3,7 @@
     <!-- Light Grid Background -->
     <div class="fixed inset-0 pointer-events-none z-0" style="background-image: radial-gradient(circle, #1a3c6e 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05;"></div>
 
-    <!-- TopNavBar -->
-    <header class="fixed top-0 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-6 rounded-full mt-4 w-full max-w-[900px] h-[64px] bg-white/80 backdrop-blur-md shadow-[0_8px_32px_rgba(26,60,110,0.06)]">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">school</span>
-        <span class="text-2xl font-extrabold tracking-tighter text-primary-container">CLASSINFY</span>
-      </div>
-      <nav class="hidden md:flex items-center gap-1 font-medium text-sm">
-        <router-link to="/" class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer">Monitoring</router-link>
-        
-        <!-- Tampil kalau sudah login -->
-        <router-link v-if="authStore.isAuthenticated" to="/dashboard"
-           class="bg-primary-container text-white rounded-full px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer">Dashboard</router-link>
-
-        <!-- Admin: tampilkan Fasilitas, bukan Peminjaman -->
-        <router-link v-slot="{ navigate }" v-if="authStore.isAuthenticated && authStore.isAdmin" to="/admin/dashboard" custom>
-          <a @click="navigate" class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer">Fasilitas</a>
-        </router-link>
-        <router-link v-else to="/peminjaman" 
-           class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer">Peminjaman</router-link>
-        <a class="text-primary-container px-4 py-2 hover:scale-105 transition-transform duration-200 cursor-pointer" @click="router.push('/team')">Tentang</a>
-      </nav>
-
-      <!-- Jika sudah login: tampilkan info user + logout -->
-      <div v-if="authStore.isAuthenticated" class="flex items-center gap-3">
-        <!-- Notification Icon -->
-        <router-link to="/notifikasi" class="relative p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Notifikasi">
-          <span class="material-symbols-outlined text-xl">notifications</span>
-          <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ unreadCount }}</span>
-        </router-link>
-        <!-- Chat Icon -->
-        <router-link to="/chat" class="p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Chat dengan Admin">
-          <span class="material-symbols-outlined text-xl">chat</span>
-        </router-link>
-
-        <div class="text-right hidden sm:block">
-          <p class="text-[11px] font-bold text-primary leading-none uppercase tracking-wider">{{ authStore.user?.role?.name || 'User' }}</p>
-          <p class="text-[10px] text-slate-500 font-medium">{{ authStore.user?.username || '' }}</p>
-        </div>
-        <div
-          @click="router.push('/dashboard')"
-          class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform"
-          title="Ke Dashboard"
-        >
-          {{ initials }}
-        </div>
-        <button
-          @click="handleLogout"
-          class="text-slate-500 hover:text-red-600 transition-colors cursor-pointer p-1"
-          title="Logout"
-        >
-          <span class="material-symbols-outlined text-xl">logout</span>
-        </button>
-      </div>
-      <!-- Jika belum login: tampilkan tombol Login -->
-      <button
-        v-else
-        @click="router.push('/auth/login')"
-        class="bg-transparent border border-primary-container text-primary-container px-6 py-2 rounded-full font-bold hover:bg-primary-container hover:text-white transition-all duration-200 cursor-pointer"
-      >
-        Login
-      </button>
-    </header>
+    <UserNavbar />
 
     <!-- Main Content -->
     <main class="relative z-10 pt-28 pb-20 px-6 max-w-5xl mx-auto space-y-6">
@@ -289,6 +228,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
+import UserNavbar from '../../components/layout/UserNavbar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -300,7 +240,7 @@ const scheduleLogs = ref([])
 const isLoading = ref(true)
 const openDropdownId = ref(null)
 const filterType = ref('all')
-const unreadCount = ref(2)
+const unreadCount = ref(0)
 
 const page = ref(1)
 const size = ref(10)

@@ -1,11 +1,13 @@
 require('dotenv').config();
-const { User, Kelas } = require('../models');
+const { User, Role } = require('../models');
 
-async function fixRias() {
-  const kelas2024B = await Kelas.findOne({ where: { name: '2024B' } });
-  if (kelas2024B) {
-    await User.update({ kelasId: kelas2024B.id }, { where: { username: 'RIAS' } });
-    console.log('Fixed RIAS to 2024B!');
-  }
+async function listUsers() {
+  const users = await User.findAll({
+    include: [{ model: Role, as: 'role' }]
+  });
+  console.log('List of users in database:');
+  users.forEach(u => {
+    console.log(`- Username: ${u.username}, Email: ${u.email}, Role: ${u.role?.name} (id:${u.roleId})`);
+  });
 }
-fixRias().then(() => process.exit(0));
+listUsers().then(() => process.exit(0));
