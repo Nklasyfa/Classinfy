@@ -210,17 +210,25 @@ exports.createBooking = async (req, res) => {
     const bookingDetail = await Booking.findByPk(newBooking.id, { include: withRelations });
 
     // Notifikasi untuk semua Admin
-    const admins = await User.findAll({ where: { roleId: 1 } });
-    for (const admin of admins) {
-      await Notification.create({
-        userId: admin.id,
-        title: 'Permohonan Peminjaman Baru',
-        message: `Permohonan baru untuk ruangan ${bookingDetail.room?.name || 'Fasilitas'} pada ${bookingDetail.bookingDate} oleh ${bookingDetail.user?.username || 'User'}.`
-      });
+    try {
+      const admins = await User.findAll({ where: { roleId: 1 } });
+      for (const admin of admins) {
+        await Notification.create({
+          userId: admin.id,
+          title: 'Permohonan Peminjaman Baru',
+          message: `Permohonan baru untuk ruangan ${bookingDetail.room?.name || 'Fasilitas'} pada ${bookingDetail.bookingDate} oleh ${bookingDetail.user?.username || 'User'}.`
+        });
+      }
+    } catch (notifError) {
+      console.error('Gagal mengirim notifikasi:', notifError);
     }
 
     // Log: created
-    await logBookingAction({ bookingId: newBooking.id, actorId: userId, actorRole: 'Mahasiswa', oldStatus: '-', newStatus: 'pending', action: 'created', notes: `Permohonan diajukan. Tier ${weight}: ${PRIORITY_LABELS[weight]}` });
+    try {
+      await logBookingAction({ bookingId: newBooking.id, actorId: userId, actorRole: 'Mahasiswa', oldStatus: '-', newStatus: 'pending', action: 'created', notes: `Permohonan diajukan. Tier ${weight}: ${PRIORITY_LABELS[weight]}` });
+    } catch (logError) {
+      console.error('Gagal membuat log peminjaman:', logError);
+    }
 
     res.status(201).json({ message: 'Permohonan berhasil disubmit (status: pending)', data: bookingDetail });
   } catch (error) {
