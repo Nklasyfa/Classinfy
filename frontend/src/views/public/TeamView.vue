@@ -3,6 +3,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
+import AuroraImg from '../../assets/kelompok/Aurora.png'
+import FaizImg from '../../assets/kelompok/Faiz.png'
+import FathanImg from '../../assets/kelompok/Fathan.png'
+import NabilaImg from '../../assets/kelompok/Nabila.png'
+import NakulaImg from '../../assets/kelompok/Nakula.png'
+
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -52,7 +58,7 @@ const teamMembers = [
     github: '#',
     instagram: '#',
     linkedin: '#', // Included as in the mockup
-    image: 'https://ui-avatars.com/api/?name=Nakula+Syafa&background=1a3c6e&color=fff&size=150' // Placeholder
+    image: NakulaImg
   },
   {
     role: 'System Analyst',
@@ -64,7 +70,7 @@ const teamMembers = [
     github: '#',
     instagram: '#',
     linkedin: '#',
-    image: 'https://ui-avatars.com/api/?name=Nabila+Pasha&background=2d5daa&color=fff&size=150'
+    image: NabilaImg
   },
   {
     role: 'Scrum Master',
@@ -76,7 +82,7 @@ const teamMembers = [
     github: '#',
     instagram: '#',
     linkedin: '#',
-    image: 'https://ui-avatars.com/api/?name=Fathan+Orvala&background=405e92&color=fff&size=150'
+    image: FathanImg
   },
   {
     role: 'UI/UX Designer',
@@ -88,7 +94,7 @@ const teamMembers = [
     github: '#',
     instagram: '#',
     linkedin: '#',
-    image: 'https://ui-avatars.com/api/?name=Aurora+Ilmannafia&background=264679&color=fff&size=150'
+    image: AuroraImg
   },
   {
     role: 'Quality Assurance',
@@ -100,7 +106,7 @@ const teamMembers = [
     github: '#',
     instagram: '#',
     linkedin: '#',
-    image: 'https://ui-avatars.com/api/?name=Faiz+Ramadhani&background=002653&color=fff&size=150'
+    image: FaizImg
   }
 ]
 </script>

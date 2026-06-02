@@ -1,0 +1,21 @@
+# Admin Login — Mitigated from SQL Injection & Authentication Bypass
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        # Mitigasi: Menggunakan Parameterized Query untuk mencegah SQL Injection
+        user = db_query(f"SELECT * FROM users WHERE username={PH}", (username,), fetchone=True)
+
+        # Mitigasi: Validasi keberadaan user dan kecocokan password hash
+        if user and check_password_hash(user["password"], password):
+            session["admin_logged_in"] = True
+            session["admin_user"]      = user["username"]
+            session["sqli_used"]       = False
+            return redirect(url_for("admin_dashboard"))
+        else:
+            error = "Username atau password salah."
+
+    return render_template("login.html", error=error)

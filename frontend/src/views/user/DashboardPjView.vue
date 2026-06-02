@@ -218,6 +218,15 @@
             </tbody>
           </table>
         </div>
+        
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+          <span class="text-xs font-medium text-slate-500">Menampilkan halaman {{ page }} dari {{ totalPages }} (Total {{ totalItems }} jadwal)</span>
+          <div class="flex gap-2">
+            <button @click="prevPage" :disabled="page <= 1" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer">Sebelumnya</button>
+            <button @click="nextPage" :disabled="page >= totalPages" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer">Selanjutnya</button>
+          </div>
+        </div>
       </section>
 
       <!-- History Card -->
@@ -293,6 +302,11 @@ const openDropdownId = ref(null)
 const filterType = ref('all')
 const unreadCount = ref(2)
 
+const page = ref(1)
+const size = ref(10)
+const totalPages = ref(1)
+const totalItems = ref(0)
+
 const statusConfig = {
   aktif: { pillClass: 'bg-green-50 text-green-600', dotClass: 'bg-green-500', label: 'Dipakai' },
   online: { pillClass: 'bg-blue-50 text-blue-600', dotClass: 'bg-blue-500', label: 'Online' },
@@ -340,8 +354,14 @@ const pendingUpdatesCount = computed(() => schedules.value.filter(s => s.dayOfWe
 const fetchMySchedules = async () => {
   isLoading.value = true
   try {
-    const res = await axios.get(`${API_URL}/api/schedules/me`, { headers: authStore.getAuthHeaders() })
+    const res = await axios.get(`${API_URL}/api/schedules/me`, { 
+      headers: authStore.getAuthHeaders(),
+      params: { page: page.value, size: size.value }
+    })
     schedules.value = res.data.data || []
+    totalPages.value = res.data.totalPages || 1
+    totalItems.value = res.data.totalItems || 0
+
     let allLogs = []
     for (const s of schedules.value) {
       try {
@@ -355,6 +375,20 @@ const fetchMySchedules = async () => {
     console.error('Failed fetching schedules', err)
   } finally {
     isLoading.value = false
+  }
+}
+
+const prevPage = () => {
+  if (page.value > 1) {
+    page.value--
+    fetchMySchedules()
+  }
+}
+
+const nextPage = () => {
+  if (page.value < totalPages.value) {
+    page.value++
+    fetchMySchedules()
   }
 }
 

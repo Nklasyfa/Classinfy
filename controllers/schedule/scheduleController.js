@@ -9,6 +9,12 @@ exports.getMySchedules = async (req, res) => {
     const userId = req.user.id;
     const user = await User.findByPk(userId);
     let schedules = [];
+    
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+    const limit = size;
+    const offset = (page - 1) * limit;
+    let totalItems = 0;
 
     if (user.roleId == 2 || user.roleId == 3 || user.roleId == 4) {
       const { Matkul, Kelas, Prodi } = require('../../models');
@@ -51,11 +57,15 @@ exports.getMySchedules = async (req, res) => {
         }
         
         if (prodiOr.length > 0) {
-          schedules = await Schedule.findAll({
+          const result = await Schedule.findAndCountAll({
             where: { [Op.or]: prodiOr },
             include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
             order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+            limit,
+            offset,
           });
+          schedules = result.rows;
+          totalItems = result.count;
         }
       } else {
         // Dosen (3) hanya melihat matkul yang diampu secara spesifik (termasuk Prodinya agar tidak bocor)
@@ -80,11 +90,15 @@ exports.getMySchedules = async (req, res) => {
         }
 
         if (fallbackOr.length > 0) {
-          schedules = await Schedule.findAll({
+          const result = await Schedule.findAndCountAll({
             where: { [Op.or]: fallbackOr },
             include: [{ model: Room, as: 'room', attributes: ['id', 'code', 'name'] }],
             order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']],
+            limit,
+            offset,
           });
+          schedules = result.rows;
+          totalItems = result.count;
         }
       }
 
@@ -149,6 +163,9 @@ exports.getMySchedules = async (req, res) => {
       return res.status(200).json({
         message: user.roleId == 2 ? `Jadwal Kelas Saya` : `Jadwal tanggung jawab saya`,
         data: schedulesWithDay,
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit) || 1,
+        totalItems,
       });
     }
 
@@ -160,6 +177,9 @@ exports.getMySchedules = async (req, res) => {
     res.status(200).json({
       message: user.roleId == 2 ? `Jadwal Kelas Saya` : `Jadwal tanggung jawab saya`,
       data: schedulesWithDay,
+      currentPage: page,
+      totalPages: Math.ceil(totalItems / limit) || 1,
+      totalItems,
     });
   } catch (error) {
     console.error("Error in getMySchedules:", error);

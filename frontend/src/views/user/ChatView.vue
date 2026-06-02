@@ -5,6 +5,26 @@ import { useAuthStore } from '../../stores/auth'
 import AdminNavbar from '../../components/layout/AdminNavbar.vue'
 import axios from 'axios'
 
+import AuroraImg from '../../assets/kelompok/Aurora.png'
+import FaizImg from '../../assets/kelompok/Faiz.png'
+import FathanImg from '../../assets/kelompok/Fathan.png'
+import NabilaImg from '../../assets/kelompok/Nabila.png'
+import NakulaImg from '../../assets/kelompok/Nakula.png'
+
+const avatarMap = {
+  aurora: AuroraImg,
+  faiz: FaizImg,
+  fathan: FathanImg,
+  nabila: NabilaImg,
+  nakula: NakulaImg
+}
+
+const getAvatarUrl = (username) => {
+  if (!username) return null;
+  const nameKey = Object.keys(avatarMap).find(key => username.toLowerCase().includes(key));
+  return nameKey ? avatarMap[nameKey] : null;
+}
+
 const router = useRouter()
 const authStore = useAuthStore()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -153,8 +173,9 @@ const scrollBottom = async () => {
           <p class="text-[11px] font-bold text-primary leading-none uppercase tracking-wider">{{ authStore.user?.role?.name || 'User' }}</p>
           <p class="text-[10px] text-slate-500 font-medium">{{ authStore.user?.username || '' }}</p>
         </div>
-        <div @click="router.push('/dashboard')" class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform">
-          {{ initials }}
+        <div @click="router.push('/dashboard')" class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-sm shadow-sm cursor-pointer hover:scale-105 transition-transform overflow-hidden">
+          <img v-if="getAvatarUrl(authStore.user?.username)" :src="getAvatarUrl(authStore.user?.username)" class="w-full h-full object-cover" />
+          <span v-else>{{ initials }}</span>
         </div>
         <button @click="handleLogout" class="text-slate-500 hover:text-red-600 transition-colors cursor-pointer p-1" title="Logout">
           <span class="material-symbols-outlined text-xl">logout</span>
@@ -181,8 +202,12 @@ const scrollBottom = async () => {
             :class="['p-4 border-b border-slate-50 cursor-pointer transition-colors', selectedUserId === conv.userId ? 'bg-[#1A3C6E]/5 border-l-4 border-l-[#1A3C6E]' : 'hover:bg-slate-50']"
           >
             <div class="flex justify-between items-center mb-1">
-              <span class="font-bold text-[#1A3C6E] text-sm truncate max-w-[70%]">{{ conv.username }}</span>
-              <span class="text-[10px] font-semibold text-slate-400">{{ formatTime(conv.time) }}</span>
+              <div class="flex items-center gap-2 truncate pr-2">
+                <img v-if="getAvatarUrl(conv.username)" :src="getAvatarUrl(conv.username)" class="w-6 h-6 rounded-full object-cover shrink-0" />
+                <span v-else class="w-6 h-6 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">{{ conv.username.charAt(0).toUpperCase() }}</span>
+                <span class="font-bold text-[#1A3C6E] text-sm truncate">{{ conv.username }}</span>
+              </div>
+              <span class="text-[10px] font-semibold text-slate-400 shrink-0">{{ formatTime(conv.time) }}</span>
             </div>
             <p class="text-xs text-slate-500 truncate">{{ conv.lastMessage }}</p>
           </div>
@@ -193,8 +218,17 @@ const scrollBottom = async () => {
       <div class="bg-white rounded-3xl shadow-[0_8px_32px_rgba(26,60,110,0.06)] border border-slate-100 flex flex-col overflow-hidden h-full transition-all" :class="isAdmin ? 'w-2/3' : 'w-full max-w-3xl mx-auto'">
         <!-- Chat Header -->
         <div class="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-slate-100 bg-white">
-          <div class="w-10 h-10 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white font-bold text-sm">
-            {{ isAdmin ? (selectedUserId ? selectedUserName.charAt(0).toUpperCase() : '?') : 'A' }}
+          <div class="w-10 h-10 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+            <template v-if="isAdmin && selectedUserId">
+              <img v-if="getAvatarUrl(selectedUserName)" :src="getAvatarUrl(selectedUserName)" class="w-full h-full object-cover" />
+              <span v-else>{{ selectedUserName.charAt(0).toUpperCase() }}</span>
+            </template>
+            <template v-else-if="!isAdmin">
+              <span>A</span>
+            </template>
+            <template v-else>
+              <span>?</span>
+            </template>
           </div>
           <div>
             <p class="font-extrabold text-[#1A3C6E] text-sm">{{ isAdmin ? (selectedUserId ? selectedUserName : 'Pilih User dari List') : 'Admin CLASSINFY' }}</p>
@@ -220,8 +254,14 @@ const scrollBottom = async () => {
           </div>
 
           <div v-for="msg in messages" :key="msg.id" :class="msg.fromUser ? 'flex justify-end' : 'flex justify-start items-end gap-2'">
-            <div v-if="!msg.fromUser" class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-              {{ isAdmin ? selectedUserName.charAt(0).toUpperCase() : 'A' }}
+            <div v-if="!msg.fromUser" class="w-7 h-7 rounded-full bg-[#1A3C6E] flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden">
+              <template v-if="isAdmin">
+                <img v-if="getAvatarUrl(selectedUserName)" :src="getAvatarUrl(selectedUserName)" class="w-full h-full object-cover" />
+                <span v-else>{{ selectedUserName.charAt(0).toUpperCase() }}</span>
+              </template>
+              <template v-else>
+                <span>A</span>
+              </template>
             </div>
             <div :class="[
               'max-w-[72%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-sm border border-slate-100/50',
@@ -232,7 +272,10 @@ const scrollBottom = async () => {
               <p>{{ msg.text }}</p>
               <p :class="msg.fromUser ? 'text-blue-200' : 'text-slate-400'" class="text-[9px] mt-1 text-right font-bold">{{ msg.time }}</p>
             </div>
-            <div v-if="msg.fromUser" class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-[10px] font-bold shrink-0">{{ initials }}</div>
+            <div v-if="msg.fromUser" class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-[10px] font-bold shrink-0 overflow-hidden">
+              <img v-if="getAvatarUrl(authStore.user?.username)" :src="getAvatarUrl(authStore.user?.username)" class="w-full h-full object-cover" />
+              <span v-else>{{ initials }}</span>
+            </div>
           </div>
         </div>
 
