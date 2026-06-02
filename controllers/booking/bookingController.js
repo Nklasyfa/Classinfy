@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Booking, Room, User, Schedule, BookingLog } = require('../../models');
+const { Booking, Room, User, Schedule, BookingLog, Notification } = require('../../models');
 
 const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
@@ -208,6 +208,16 @@ exports.createBooking = async (req, res) => {
     const newBooking = await Booking.create({ roomId, userId, bookingDate, startTime, endTime, purpose, activityWeight: weight, status: 'pending', attachmentUrl });
 
     const bookingDetail = await Booking.findByPk(newBooking.id, { include: withRelations });
+
+    // Notifikasi untuk semua Admin
+    const admins = await User.findAll({ where: { roleId: 1 } });
+    for (const admin of admins) {
+      await Notification.create({
+        userId: admin.id,
+        title: 'Permohonan Peminjaman Baru',
+        message: `Permohonan baru untuk ruangan ${bookingDetail.room?.name || 'Fasilitas'} pada ${bookingDetail.bookingDate} oleh ${bookingDetail.user?.username || 'User'}.`
+      });
+    }
 
     // Log: created
     await logBookingAction({ bookingId: newBooking.id, actorId: userId, actorRole: 'Mahasiswa', oldStatus: '-', newStatus: 'pending', action: 'created', notes: `Permohonan diajukan. Tier ${weight}: ${PRIORITY_LABELS[weight]}` });
@@ -449,6 +459,16 @@ exports.respondNegotiation = async (req, res) => {
     await booking.save();
 
     await logBookingAction({ bookingId: booking.id, actorId, actorRole: 'Mahasiswa', oldStatus, newStatus, action, notes: userNotes || null });
+
+    // Notifikasi untuk semua Admin
+    const admins = await User.findAll({ where: { roleId: 1 } });
+    for (const admin of admins) {
+      await Notification.create({
+        userId: admin.id,
+        title: userResponse === 'accept' ? 'Negosiasi Peminjaman Diterima' : 'Negosiasi Peminjaman Ditolak',
+        message: `Mahasiswa ${booking.user?.username || 'User'} telah ${userResponse === 'accept' ? 'menerima' : 'menolak'} negosiasi peminjaman untuk ruangan ${booking.room?.name || 'Fasilitas'}.`
+      });
+    }
 
     await booking.reload({ include: withRelations });
     res.status(200).json({ message, data: booking });

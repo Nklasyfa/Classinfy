@@ -23,8 +23,9 @@
         <span class="material-symbols-outlined text-xl">notifications</span>
         <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ unreadCount }}</span>
       </router-link>
-      <router-link to="/chat" class="p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Chat dengan Admin">
+      <router-link to="/chat" class="relative p-2 text-primary-container hover:text-primary transition-colors cursor-pointer" title="Chat dengan Admin">
         <span class="material-symbols-outlined text-xl">chat</span>
+        <span v-if="unreadChatsCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{{ unreadChatsCount }}</span>
       </router-link>
 
       <div class="text-right hidden sm:block">
@@ -161,7 +162,8 @@ const initials = computed(() => {
   return authStore.user.username.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 })
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+const unreadCount = computed(() => notifications.value.filter(n => !n.isRead && n.title !== 'Pesan Baru dari Admin').length)
+const unreadChatsCount = computed(() => notifications.value.filter(n => !n.isRead && n.title === 'Pesan Baru dari Admin').length)
 
 const fetchNotifications = async () => {
   if (!authStore.isAuthenticated) return

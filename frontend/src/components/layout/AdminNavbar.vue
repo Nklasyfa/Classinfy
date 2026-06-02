@@ -11,6 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 const notifications = ref([])
 const unreadCount = ref(0)
+const unreadChatsCount = ref(0)
 const unverifiedCount = ref(0)
 const showProfileDropdown = ref(false)
 
@@ -35,7 +36,8 @@ const fetchNotifications = async () => {
 
     const resNotif = await axios.get(`${API_URL}/api/notifications`, { headers: authStore.getAuthHeaders() })
     notifications.value = resNotif.data.data || []
-    unreadCount.value = notifications.value.filter(n => !n.isRead).length
+    unreadCount.value = notifications.value.filter(n => !n.isRead && n.title !== 'Pesan Chat Masuk').length
+    unreadChatsCount.value = notifications.value.filter(n => !n.isRead && n.title === 'Pesan Chat Masuk').length
   } catch (error) {
     console.error('Failed fetching data for admin navbar', error)
   }
@@ -104,8 +106,11 @@ onUnmounted(() => {
 
 
         <!-- Chat Icon -->
-        <router-link to="/chat" class="p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Pesan Masuk">
+        <router-link to="/chat" class="relative p-2 text-[#1A3C6E]/60 hover:text-[#1A3C6E] transition-colors cursor-pointer" title="Pesan Masuk">
           <span class="material-symbols-outlined text-xl">forum</span>
+          <span v-if="unreadChatsCount > 0" class="absolute top-1 right-1 bg-red-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-md border border-white animate-pulse">
+            {{ unreadChatsCount }}
+          </span>
         </router-link>
 
         <div class="text-right hidden sm:block">

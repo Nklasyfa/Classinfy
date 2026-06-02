@@ -97,10 +97,18 @@ exports.sendMessage = async (req, res) => {
         message: 'Anda menerima pesan baru di Live Chat: ' + text.substring(0, 50) + (text.length > 50 ? '...' : ''),
         type: 'chat'
       });
-    } 
-    // Jika sender adalah User, dan kita anggap ada user admin yang stand-by, 
-    // kita bisa men-skip karena admin melihat semua dari dashboard, atau jika mau di-broadcast bisa ditambahkan logika untuk mencari Admin ID.
-    // Tapi untuk saat ini kita hanya notify user jika admin membalas.
+    } else if (authUser.roleId != 1) {
+      // Jika sender adalah User, kirim notifikasi ke semua Admin
+      const admins = await User.findAll({ where: { roleId: 1 } });
+      for (const admin of admins) {
+        await Notification.create({
+          userId: admin.id,
+          title: 'Pesan Chat Masuk',
+          message: `Pesan baru dari ${authUser.username || 'User'}: "${text.substring(0, 50) + (text.length > 50 ? '...' : '')}"`,
+          type: 'chat'
+        });
+      }
+    }
 
     res.status(201).json({ data: message });
   } catch (error) {
