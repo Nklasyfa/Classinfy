@@ -42,14 +42,35 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
   const requestDate = new Date(Date.UTC(year, month - 1, day));
   const dayOfWeek = requestDate.getUTCDay();
   const scheduleConflicts = await Schedule.findAll({
-    where: { roomId, dayOfWeek, status: 'aktif', [Op.and]: [{ startTime: { [Op.lt]: endTime } }, { endTime: { [Op.gt]: startTime } }] },
+    where: { roomId, dayOfWeek, status: { [Op.ne]: 'batal' }, [Op.and]: [{ startTime: { [Op.lt]: endTime } }, { endTime: { [Op.gt]: startTime } }] },
   });
 
   for (const sc of scheduleConflicts) {
-    conflicts.push({
-      type: 'schedule', source: 'Jadwal akademik tetap',
-      detail: { id: sc.id, day: DAY_NAMES[sc.dayOfWeek], startTime: sc.startTime, endTime: sc.endTime, activity: sc.activity, semester: sc.semester, status: sc.status },
-    });
+    let isAutoCancelled = false;
+    if (sc.status === 'ditunda') {
+      const today = new Date();
+      const wibDateOptions = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+      const todayStr = today.toLocaleDateString('en-CA', wibDateOptions);
+      if (bookingDate === todayStr) {
+        const wibTimeOptions = { timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const currentTime = today.toLocaleTimeString('en-GB', wibTimeOptions);
+        const [cHour, cMin] = currentTime.split(':').map(Number);
+        const currentMins = cHour * 60 + cMin;
+        
+        const [sHour, sMin] = sc.startTime.split(':').map(Number);
+        const startMins = sHour * 60 + sMin;
+        if (currentMins >= startMins - 15) {
+          isAutoCancelled = true;
+        }
+      }
+    }
+
+    if (!isAutoCancelled) {
+      conflicts.push({
+        type: 'schedule', source: 'Jadwal akademik tetap',
+        detail: { id: sc.id, day: DAY_NAMES[sc.dayOfWeek], startTime: sc.startTime, endTime: sc.endTime, activity: sc.activity, semester: sc.semester, status: sc.status },
+      });
+    }
   }
 
   return { status: conflicts.length === 0 ? 'aman' : 'conflict', totalConflicts: conflicts.length, conflicts };

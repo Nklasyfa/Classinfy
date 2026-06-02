@@ -47,7 +47,7 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
     });
   }
 
-  // 2. Cek konflik dengan Schedule tetap (jadwal akademik rutin) — hanya yang aktif
+  // 2. Cek konflik dengan Schedule tetap (jadwal akademik rutin)
   const requestDate = new Date(bookingDate);
   const dayOfWeek = requestDate.getDay(); // 0 = Minggu, 1 = Senin, ...
 
@@ -55,7 +55,7 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
     where: {
       roomId,
       dayOfWeek,
-      status: 'aktif', // Hanya jadwal yang aktif yang menjadi konflik
+      status: { [Op.ne]: 'batal' },
       [Op.and]: [
         { startTime: { [Op.lt]: endTime } },
         { endTime: { [Op.gt]: startTime } },
@@ -64,19 +64,40 @@ async function detectConflict({ roomId, bookingDate, startTime, endTime, exclude
   });
 
   for (const sc of scheduleConflicts) {
-    conflicts.push({
-      type: 'schedule',
-      source: 'Jadwal akademik tetap',
-      detail: {
-        id: sc.id,
-        day: DAY_NAMES[sc.dayOfWeek],
-        startTime: sc.startTime,
-        endTime: sc.endTime,
-        activity: sc.activity,
-        semester: sc.semester,
-        status: sc.status,
-      },
-    });
+    let isAutoCancelled = false;
+    if (sc.status === 'ditunda') {
+      const today = new Date();
+      const wibDateOptions = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+      const todayStr = today.toLocaleDateString('en-CA', wibDateOptions);
+      if (bookingDate === todayStr) {
+        const wibTimeOptions = { timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        const currentTime = today.toLocaleTimeString('en-GB', wibTimeOptions);
+        const [cHour, cMin] = currentTime.split(':').map(Number);
+        const currentMins = cHour * 60 + cMin;
+        
+        const [sHour, sMin] = sc.startTime.split(':').map(Number);
+        const startMins = sHour * 60 + sMin;
+        if (currentMins >= startMins - 15) {
+          isAutoCancelled = true;
+        }
+      }
+    }
+
+    if (!isAutoCancelled) {
+      conflicts.push({
+        type: 'schedule',
+        source: 'Jadwal akademik tetap',
+        detail: {
+          id: sc.id,
+          day: DAY_NAMES[sc.dayOfWeek],
+          startTime: sc.startTime,
+          endTime: sc.endTime,
+          activity: sc.activity,
+          semester: sc.semester,
+          status: sc.status,
+        },
+      });
+    }
   }
 
   return {
