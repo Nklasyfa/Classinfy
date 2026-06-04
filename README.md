@@ -2,6 +2,9 @@
 
 CLASSIFY is a comprehensive web-based platform designed to streamline and manage classroom scheduling, room bookings, and schedule conflict resolution for academic institutions. The system supports multiple user roles, a document approval cycle, conflict detection, and a real-time notification system.
 
+## 🔗 Live Demo
+Akses aplikasi yang sudah di-deploy di sini: **[Live Demo CLASSIFY](https://classinfy.vercel.app)** *(Sesuaikan jika link-nya berbeda)*
+
 ## 🌟 Key Features
 
 - **Role-Based Access Control**: Different dashboards and permissions for Admin, Lecturers (Dosen), Students (Mahasiswa), and Project Leaders / Persons in Charge (PJ).
@@ -80,6 +83,15 @@ Can view general schedules and room availability.
 - **Password**: `password123`
 
 *(Note: If these accounts do not exist in your local setup, you may need to register them manually through the application or run the database seeder.)*
+
+## 👨‍💻 Tim Pengembang (Kelompok 2)
+Aplikasi ini dikembangkan dengan bangga oleh Kelompok 2 sebagai solusi inovatif untuk memantau ketersediaan ruang kampus di Lingkungan Kampus 5 UNESA.
+
+- **Nakula Syafa Saputra** (25051204374) — *Programmer* | [GitHub](https://github.com/Nklasyfa)
+- **Nabila Pasha Hamidah** (25051204318) — *System Analyst* | [GitHub](https://github.com/NabilaPasha16)
+- **Fathan Orvala** (25051204271) — *Scrum Master* | [GitHub](https://github.com/atangorp)
+- **Aurora Ilmannafia** (25051204276) — *UI/UX Designer* | [GitHub](https://github.com/auroranafia)
+- **Faiz Ramadhani** (25051204372) — *Quality Assurance* | [GitHub](https://github.com/faizramadhani01)
 
 ## 📝 License
 
