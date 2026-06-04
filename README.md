@@ -62,22 +62,22 @@ Akses aplikasi yang sudah di-deploy di sini: **[Live Demo CLASSIFY](https://clas
 
 Gunakan kredensial default berikut untuk menjelajahi berbagai peran pengguna di dalam sistem. Pastikan database sudah di-*seed* dengan benar sebelum menggunakan akun-akun ini.
 
-### 1. Administrator
+### 1. Administrator/tendik
 Memiliki akses penuh untuk mengelola pengguna, ruangan, menyetujui/menolak permohonan jadwal, dan melihat log sistem.
 - **Email**: `admin@classify.com`
 - **Password**: `password123`
 
-### 2. Dosen (Lecturer)
+### 2. Dosen 
 Dapat melihat jadwal, mengusulkan waktu alternatif, dan berkomunikasi melalui sistem chat.
 - **Email**: `dosen@classify.com`
 - **Password**: `password123`
 
-### 3. Penanggung Jawab / PJ (Project Leader)
+### 3. Penanggung Jawab Matakuliah
 Bertanggung jawab atas kelas tertentu, dapat mengajukan jadwal pengganti/peminjaman, menegosiasikan konflik, dan melihat detail status jadwal.
 - **Email**: `pj@classify.com`
 - **Password**: `password123`
 
-### 4. Mahasiswa (Student)
+### 4. Mahasiswa 
 Dapat melihat jadwal umum dan mengecek ketersediaan ruangan.
 - **Email**: `mahasiswa@classify.com`
 - **Password**: `password123`
